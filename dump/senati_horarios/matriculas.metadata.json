@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"estudiante":{"$numberInt":"1"},"bloque":{"$numberInt":"1"}},"name":"estudiante_1_bloque_1","background":true,"unique":true}],"uuid":"6f5b0d6d1d4a45158000be53dcf49831","collectionName":"matriculas","type":"collection"}
