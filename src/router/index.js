@@ -53,6 +53,11 @@ const router = createRouter({
       path: '/periodos',
       name: 'periodos',
       component: () => import('../views/PeriodosView.vue')
+    },
+    {
+      path: '/importar-excel',
+      name: 'importar-excel',
+      component: () => import('../views/ImportarBloquesView.vue')
     }
   ]
 })
