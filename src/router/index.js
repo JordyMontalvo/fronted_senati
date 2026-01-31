@@ -10,7 +10,7 @@ const router = createRouter({
       component: HomeView
     },
     {
-      path: '/carreras',
+      path: '/carrerastumama',
       name: 'carreras',
       component: () => import('../views/CarrerasView.vue')
     },
