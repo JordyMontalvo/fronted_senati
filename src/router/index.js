@@ -11,7 +11,7 @@ const router = createRouter({
     },
     {
       path: '/carrerastumama',
-      name: 'carreras',
+      name: 'carrerastumama',
       component: () => import('../views/CarrerasView.vue')
     },
     {
