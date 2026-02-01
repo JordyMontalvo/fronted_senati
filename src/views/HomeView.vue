@@ -5,98 +5,43 @@
       <p class="hero-subtitle">SENATI - Instituto de Educación Superior</p>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-primary">
+    <div class="actions-grid main-actions">
+      <!-- Card 1: Asignación de Horarios -->
+      <router-link to="/horarios/gestionar" class="action-card primary-action">
+        <div class="action-icon">
           <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
           </svg>
         </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ carreras.length }}</div>
-          <div class="stat-label">Carreras</div>
-        </div>
-      </div>
+        <h3>Asignar Horarios</h3>
+        <p>Gestiona y asigna horarios a bloques, aulas y profesores.</p>
+        <span class="action-arrow">→</span>
+      </router-link>
 
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-success">
+      <!-- Card 2: Importar Bloques (IA) -->
+      <router-link to="/importar-excel" class="action-card ai-action">
+        <div class="action-icon ai-icon">
           <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
           </svg>
         </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ cursos.length }}</div>
-          <div class="stat-label">Cursos</div>
-        </div>
-      </div>
+        <div class="badge-new">Nuevo ✨</div>
+        <h3>Importar Bloques (IA)</h3>
+        <p>Sube tu Excel y deja que la IA organice los horarios automáticamente.</p>
+        <span class="action-arrow">→</span>
+      </router-link>
 
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-warning">
+      <!-- Card 3: Reportes (Nuevos próximamente) -->
+      <div class="action-card disabled-action">
+        <div class="action-icon">
           <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6z" clip-rule="evenodd"/>
+            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
           </svg>
         </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ bloques.length }}</div>
-          <div class="stat-label">Bloques</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon stat-icon-secondary">
-          <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ profesores.length }}</div>
-          <div class="stat-label">Profesores</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="quick-actions">
-      <h2>Accesos Rápidos</h2>
-      <div class="actions-grid">
-        <router-link to="/carreras" class="action-card">
-          <div class="action-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
-            </svg>
-          </div>
-          <h3>Gestionar Carreras</h3>
-          <p>Administra las carreras profesionales del instituto</p>
-        </router-link>
-
-        <router-link to="/bloques" class="action-card">
-          <div class="action-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <h3>Programar Bloques</h3>
-          <p>Crea y gestiona bloques académicos por período</p>
-        </router-link>
-
-        <router-link to="/horarios" class="action-card">
-          <div class="action-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <h3>Ver Horarios</h3>
-          <p>Consulta y genera horarios académicos</p>
-        </router-link>
-
-        <router-link to="/profesores" class="action-card">
-          <div class="action-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </div>
-          <h3>Gestionar Profesores</h3>
-          <p>Administra el registro de docentes</p>
-        </router-link>
+        <h3>Reportes</h3>
+        <p>Próximamente: Estadísticas detalladas y exportación de datos.</p>
+        <span class="badge-soon">Pronto</span>
       </div>
     </div>
   </div>
@@ -150,127 +95,128 @@ onMounted(async () => {
   color: var(--gray);
 }
 
-.stats-grid {
+.main-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-}
-
-.stat-card {
-  background: var(--white);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: var(--shadow);
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-icon-primary {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-  color: var(--primary);
-}
-
-.stat-icon-success {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.stat-icon-warning {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning);
-}
-
-.stat-icon-secondary {
-  background: rgba(118, 75, 162, 0.1);
-  color: var(--secondary);
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  color: var(--gray);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.quick-actions h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
 }
 
 .action-card {
+  position: relative;
   background: var(--white);
-  border-radius: 1rem;
-  padding: 2rem;
+  border-radius: 1.5rem;
+  padding: 2.5rem;
   text-decoration: none;
   color: inherit;
   box-shadow: var(--shadow);
-  transition: all 0.3s;
-  border: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
 }
 
 .action-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
   box-shadow: var(--shadow-lg);
   border-color: var(--primary);
 }
 
+.primary-action {
+  background: linear-gradient(145deg, #ffffff, #f3f4f6);
+}
+
+.ai-action {
+  background: linear-gradient(145deg, #f0fdf4, #ffffff);
+  border: 1px solid #bbf7d0;
+}
+
+.ai-action:hover {
+  border-color: #22c55e;
+  box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.2);
+}
+
+.disabled-action {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.disabled-action:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+  border-color: var(--border);
+}
+
 .action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 0.75rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 1rem;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.ai-icon {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
 .action-card h3 {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--dark);
 }
 
 .action-card p {
   color: var(--gray);
-  font-size: 0.9375rem;
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  flex: 1;
+}
+
+.action-arrow {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: auto;
+  transition: transform 0.2s;
+}
+
+.action-card:hover .action-arrow {
+  transform: translateX(6px);
+}
+
+.badge-new {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.badge-soon {
+  display: inline-block;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  margin-top: auto;
 }
 
 @media (max-width: 768px) {
@@ -278,12 +224,9 @@ onMounted(async () => {
     font-size: 1.875rem;
   }
 
-  .stats-grid {
+  .main-actions {
     grid-template-columns: 1fr;
-  }
-
-  .actions-grid {
-    grid-template-columns: 1fr;
+    padding: 0 1rem;
   }
 }
 </style>
