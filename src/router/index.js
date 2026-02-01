@@ -58,6 +58,11 @@ const router = createRouter({
       path: '/importar-excel',
       name: 'importar-excel',
       component: () => import('../views/ImportarBloquesView.vue')
+    },
+    {
+      path: '/ubicaciones',
+      name: 'ubicaciones',
+      component: () => import('../views/UbicacionesView.vue')
     }
   ]
 })
