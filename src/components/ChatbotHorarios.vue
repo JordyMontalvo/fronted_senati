@@ -3,7 +3,7 @@
     <div class="chatbot-header" @click="minimizado && minimizar()">
       <div class="header-content">
         <div class="bot-avatar">🤖</div>
-        <div>
+        <div class="header-text-info">
           <h3>Asistente de Horarios</h3>
           <span class="status">● En línea</span>
         </div>
@@ -413,6 +413,7 @@ onMounted(() => {
   display: none;
 }
 
+
 .chatbot-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -421,17 +422,59 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  height: 70px; /* Altura fija para el header */
+}
+
+/* Estilos para estado MINIMIZADO (Botón Circular) */
+.chatbot-container.minimizado {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  bottom: 2rem;
+  right: 2rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .chatbot-container.minimizado .chatbot-header {
-  cursor: pointer;
-  border-radius: 16px;
+  padding: 0;
+  height: 100%;
+  border-radius: 50%;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.chatbot-container.minimizado .chatbot-header:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.chatbot-container.minimizado .header-content {
+  gap: 0;
+  justify-content: center;
+  width: 100%;
+}
+
+.chatbot-container.minimizado .bot-avatar {
+  font-size: 2rem;
+  margin: 0;
+  animation: bounce 2s infinite;
+}
+
+/* Ocultar elementos en modo minimizado */
+.chatbot-container.minimizado .header-text-info,
+.chatbot-container.minimizado .btn-minimize,
+.chatbot-container.minimizado .chat-messages,
+.chatbot-container.minimizado .chat-suggestions,
+.chatbot-container.minimizado .chat-input,
+.chatbot-container.minimizado .chat-footer {
+  display: none !important;
+}
+
+.chatbot-container.minimizado:hover {
+  transform: scale(1.1);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 .header-content {
@@ -439,6 +482,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
 }
+
 
 .bot-avatar {
   font-size: 2rem;
