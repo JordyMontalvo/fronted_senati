@@ -93,6 +93,13 @@
             <span>Ubicaciones</span>
           </router-link>
 
+          <router-link to="/reportes" class="nav-tab">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm2 4a1 1 0 100-2 1 1 0 000 2zm3-1a1 1 0 011-1h6a1 1 0 110 2H9a1 1 0 01-1-1zm-3 5a1 1 0 100-2 1 1 0 000 2zm3-1a1 1 0 011-1h6a1 1 0 110 2H9a1 1 0 01-1-1zm-3 5a1 1 0 100-2 1 1 0 000 2zm3-1a1 1 0 011-1h6a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>Reportes</span>
+          </router-link>
+
           <router-link to="/importar-excel" class="nav-tab">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
