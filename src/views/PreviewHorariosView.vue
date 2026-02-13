@@ -7,6 +7,9 @@
         <p>Revisa y modifica los horarios antes de confirmar la importación</p>
       </div>
       <div class="header-actions">
+        <button class="btn btn-info" @click="exportarPDF" :disabled="guardando">
+          📄 Exportar PDF
+        </button>
         <button class="btn btn-secondary" @click="cancelar">
           ✕ Cancelar
         </button>
@@ -15,6 +18,16 @@
           <span v-else>⏳ Guardando...</span>
         </button>
       </div>
+    </div>
+
+    <!-- Alertas de Conflictos -->
+    <div v-if="conflictosDetectados.length > 0" class="alert alert-warning">
+      <strong>⚠️ Conflictos Detectados:</strong>
+      <ul>
+        <li v-for="(conflicto, idx) in conflictosDetectados" :key="idx">
+          {{ conflicto.mensaje }}
+        </li>
+      </ul>
     </div>
 
     <!-- Estadísticas -->
@@ -225,6 +238,9 @@
 <script setup>
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
+import api from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -241,6 +257,7 @@ const bloquesGenerados = ref([])
 const modificaciones = ref(0)
 const guardando = ref(false)
 const horarioEditando = ref(null)
+const conflictosDetectados = ref([])
 
 // Filtros
 const filtro = ref({
@@ -399,20 +416,96 @@ const confirmarImportacion = async () => {
   }
   
   guardando.value = true
+  conflictosDetectados.value = []
   
   try {
-    // Aquí iría la llamada al backend para guardar definitivamente
-    // api.post('/upload/bloques/confirmar-preview', { horarios: horariosGenerados.value })
+    toast.info('Guardando', 'Validando y guardando en la base de datos...')
     
-    await new Promise(resolve => setTimeout(resolve, 2000)) // Simular guardado
+    // Preparar datos para enviar
+    const payload = {
+      bloques: bloquesGenerados.value,
+      horarios: horariosGenerados.value.map(h => ({
+        ...h,
+        bloqueId: bloquesGenerados.value.find(b => b.codigo === h.bloque)?.id
+      }))
+    }
     
-    toast.success('¡Listo! 🎉', `${datosPrev.value.horarios} horarios guardados exitosamente`)
-    router.push('/horarios/visuales')
+    // Llamar al endpoint real
+    const response = await api.post('/upload/bloques/confirmar-preview', payload)
+    
+    if (response.data.success) {
+      // Verificar si hay conflictos
+      if (response.data.conflictos && response.data.conflictos.length > 0) {
+        conflictosDetectados.value = response.data.conflictos
+        toast.warning('⚠️ Conflictos Detectados', `${response.data.conflictos.length} horarios con conflictos no se guardaron`)
+        
+        // Scroll a la alerta
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        toast.success('¡Éxito! 🎉', response.data.message)
+        
+        // Limpiar sessionStorage
+        sessionStorage.removeItem('horariosPreview')
+        
+        // Esperar un momento y redirigir
+        setTimeout(() => {
+          router.push('/horarios/visuales')
+        }, 2000)
+      }
+    } else {
+      toast.error('Error', response.data.message)
+    }
   } catch (error) {
-    toast.error('Error', 'No se pudieron guardar los horarios')
-    console.error(error)
+    console.error('Error al confirmar:', error)
+    toast.error('Error', error.response?.data?.message || 'No se pudieron guardar los horarios')
   } finally {
     guardando.value = false
+  }
+}
+
+const exportarPDF = () => {
+  try {
+    const doc = new jsPDF()
+    
+    // Título
+    doc.setFontSize(20)
+    doc.setTextColor(0, 66, 139)
+    doc.text('Horarios Generados - Vista Previa', 14, 20)
+    
+    // Estadísticas
+    doc.setFontSize(11)
+    doc.setTextColor(0, 0, 0)
+    doc.text(`📦 Bloques: ${datosPrev.value.bloques}`, 14, 35)
+    doc.text(`📚 Asignaciones: ${datosPrev.value.asignaciones}`, 70, 35)
+    doc.text(`📅 Horarios: ${datosPrev.value.horarios}`, 130, 35)
+    
+    // Tabla de horarios
+    const tableData = horariosGenerados.value.map(h => [
+      h.bloque,
+      h.curso,
+      h.profesor,
+      h.aula,
+      h.dia,
+      `${h.horaInicio}-${h.horaFin}`,
+      h.tipo
+    ])
+    
+    doc.autoTable({
+      head: [['Bloque', 'Curso', 'Profesor', 'Aula', 'Día', 'Horario', 'Tipo']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [0, 66, 139] }
+    })
+    
+    // Guardar
+    const fecha = new Date().toISOString().split('T')[0]
+    doc.save(`horarios-preview-${fecha}.pdf`)
+    
+    toast.success('PDF Generado', 'Descarga iniciada')
+  } catch (error) {
+    console.error('Error al generar PDF:', error)
+    toast.error('Error', 'No se pudo generar el PDF')
   }
 }
 
@@ -699,5 +792,36 @@ onMounted(() => {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.btn-info:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.alert-warning {
+  background: #fef0eb;
+  border-left: 4px solid #F26522;
+  color: #d84b0e;
+}
+
+.alert ul {
+  margin: 0.5rem 0 0 1.5rem;
+  padding: 0;
+}
+
+.alert li {
+  margin: 0.25rem 0;
 }
 </style>
