@@ -155,83 +155,132 @@
       @guardar="guardarCurso"
     >
       <form @submit.prevent="guardarCurso" class="form-modal">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Código *</label>
-            <input v-model="formulario.codigo" type="text" class="form-input" required>
+        <!-- Sección 1: Datos Principales -->
+        <div class="form-section">
+          <h3 class="section-title">📋 Datos Principales</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>ID Único (CSV) *</label>
+              <input v-model="formulario.codigo" type="text" class="form-input" required :disabled="!!cursoEditando">
+            </div>
+            <div class="form-group">
+              <label>Materia (Siglas) *</label>
+              <input v-model="formulario.materia" type="text" class="form-input" required>
+            </div>
           </div>
+          
           <div class="form-group">
-            <label>Tipo de Curso *</label>
-            <select v-model="formulario.tipoCurso" class="form-input" required>
-              <option value="">Seleccionar</option>
-              <option value="TEC">TEC - Tecnológico</option>
-              <option value="TAL">TAL - Taller</option>
-              <option value="VIR">VIR - Virtual</option>
-            </select>
+            <label>Nombre del Curso *</label>
+            <input v-model="formulario.nombre" type="text" class="form-input" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Carrera *</label>
+              <select v-model="formulario.carrera" class="form-input" required>
+                <option value="">Seleccionar carrera</option>
+                <option v-for="carrera in carreras" :key="carrera._id" :value="carrera._id">
+                  {{ carrera.codigo }} - {{ carrera.nombre }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Semestre *</label>
+              <select v-model="formulario.semestre" class="form-input" required>
+                <option value="">Seleccionar</option>
+                <option v-for="i in 6" :key="i" :value="'I'.repeat(i)">Semestre {{ 'I'.repeat(i) }}</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Nombre *</label>
-          <input v-model="formulario.nombre" type="text" class="form-input" required>
-        </div>
+        <!-- Sección 2: Detalles Académicos -->
+        <div class="form-section">
+          <h3 class="section-title">🎓 Detalles Académicos</h3>
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Código Curso</label>
+              <input v-model="formulario.numero" type="text" class="form-input" placeholder="Ej: 178">
+            </div>
+            <div class="form-group">
+              <label>Créditos</label>
+              <input v-model.number="formulario.creditos" type="number" step="0.5" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Semanas</label>
+              <input v-model.number="formulario.semanas" type="number" class="form-input">
+            </div>
+          </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Carrera *</label>
-            <select v-model="formulario.carrera" class="form-input" required>
-              <option value="">Seleccionar carrera</option>
-              <option v-for="carrera in carreras" :key="carrera._id" :value="carrera._id">
-                {{ carrera.codigo }} - {{ carrera.nombre }}
-              </option>
-            </select>
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Horas Teoría</label>
+              <input v-model.number="formulario.horasTeoria" type="number" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label>Horas Taller</label>
+              <input v-model.number="formulario.horasTaller" type="number" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label>Horas Virtual</label>
+              <input v-model.number="formulario.horasVirtual" type="number" class="form-input" min="0">
+            </div>
           </div>
-          <div class="form-group">
-            <label>Semestre *</label>
-            <select v-model="formulario.semestre" class="form-input" required>
-              <option value="">Seleccionar</option>
-              <option v-for="i in 6" :key="i" :value="'I'.repeat(i)">Semestre {{ 'I'.repeat(i) }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Materia</label>
-            <input v-model="formulario.materia" type="text" class="form-input">
-          </div>
-          <div class="form-group">
-            <label>Número</label>
-            <input v-model.number="formulario.numero" type="number" class="form-input">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Créditos</label>
-            <input v-model.number="formulario.creditos" type="number" class="form-input" min="0" step="0.5">
-          </div>
-          <div class="form-group">
-            <label>Horas Teoría</label>
-            <input v-model.number="formulario.horasTeoria" type="number" class="form-input" min="0">
+          
+          <div class="form-info">
+            <div><strong>Semanal:</strong> {{ horasTotalesFormulario }}h</div>
+            <div><strong>Semestre (Calc):</strong> {{ horasTotalesFormulario * (formulario.semanas || 16) }}h</div>
           </div>
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Horas Taller</label>
-            <input v-model.number="formulario.horasTaller" type="number" class="form-input" min="0">
+        
+        <!-- Sección 3: Clasificación y Estado -->
+        <div class="form-section">
+          <h3 class="section-title">🏷️ Clasificación y Estado</h3>
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Tipo Específico</label>
+              <input v-model="formulario.tipo_especifico" class="form-input" placeholder="Ej: 0, 1, 4...">
+            </div>
+            <div class="form-group">
+              <label>Horario SINFO</label>
+              <input v-model="formulario.horario_sinfo" class="form-input" placeholder="Ej: TEC, TAL">
+            </div>
+            <div class="form-group">
+              <label>Clasif. Blackboard</label>
+              <input v-model="formulario.clasificacion_blackboard" class="form-input">
+            </div>
           </div>
-          <div class="form-group">
-            <label>Horas Virtual</label>
-            <input v-model.number="formulario.horasVirtual" type="number" class="form-input" min="0">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <input v-model="formulario.status" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Contenido Curricular</label>
+              <input v-model="formulario.contenido_curricular" class="form-input">
+            </div>
           </div>
-        </div>
-
-        <div class="form-info">
-          <strong>Total de Horas:</strong> {{ horasTotalesFormulario }}h
+          
+          <div class="form-group">
+            <label>Comentarios</label>
+            <textarea v-model="formulario.comentarios" class="form-input" rows="2"></textarea>
+          </div>
         </div>
       </form>
+}, {
+"StartLine": 258,
+"EndLine": 270,
+"TargetContent": "const formulario = ref({\n  codigo: '',\n  nombre: '',\n  carrera: '',\n  semestre: '',\n  materia: '',\n  numero: 0,\n  tipoCurso: '',\n  creditos: 0,\n  horasTeoria: 0,\n  horasTaller: 0,\n  horasVirtual: 0\n})",
+"ReplacementContent": "const formulario = ref({\n  codigo: '',\n  nombre: '',\n  carrera: '',\n  semestre: '',\n  materia: '',\n  numero: '', \n  tipoCurso: '',\n  creditos: 0,\n  horasTeoria: 0,\n  horasTaller: 0,\n  horasVirtual: 0,\n  catalogo: '',\n  tipo_especifico: '',\n  identificacion: '',\n  horario_sinfo: '', \n  clasificacion_blackboard: '',\n  semanas: 16,\n  evaluacion_semestral: '',\n  horasSemestre: 0,\n  status: '',\n  comentarios: '',\n  contenido_curricular: ''\n})",
+"AllowMultiple": false
+}, {
+"StartLine": 670,
+"EndLine": 670,
+"TargetContent": "  .form-row {\n    grid-template-columns: 1fr;\n  }",
+"ReplacementContent": "  .form-row, .three-col {\n    grid-template-columns: 1fr;\n  }\n}\n\n.section-title {\n  font-size: 1rem;\n  font-weight: 700;\n  color: var(--primary);\n  margin-bottom: 1rem;\n  border-bottom: 2px solid #e5e7eb;\n  padding-bottom: 0.5rem;\n}\n\n.three-col {\n  display: grid;\n  grid-template-columns: 1fr 1fr 1fr;\n  gap: 1rem;\n}\n\n.form-section {\n  margin-bottom: 1.5rem;\n  background: #f9fafb;\n  padding: 1rem;\n  border-radius: 8px;\n}",
+"AllowMultiple": false
+
     </Modal>
   </div>
 </template>
@@ -330,12 +379,23 @@ function abrirModalNuevo() {
     carrera: '',
     semestre: '',
     materia: '',
-    numero: 0,
+    numero: '', 
     tipoCurso: '',
     creditos: 0,
     horasTeoria: 0,
     horasTaller: 0,
-    horasVirtual: 0
+    horasVirtual: 0,
+    catalogo: '',
+    tipo_especifico: '',
+    identificacion: '',
+    horario_sinfo: '', 
+    clasificacion_blackboard: '',
+    semanas: 16,
+    evaluacion_semestral: '',
+    horasSemestre: 0,
+    status: '',
+    comentarios: '',
+    contenido_curricular: ''
   }
   mostrarModal.value = true
 }
@@ -348,12 +408,24 @@ function editarCurso(curso) {
     carrera: curso.carrera?._id || '',
     semestre: curso.semestre || '',
     materia: curso.materia || '',
-    numero: curso.numero || 0,
+    numero: curso.numero || '',
     tipoCurso: curso.tipoCurso || '',
     creditos: curso.creditos || 0,
     horasTeoria: curso.horasTeoria || 0,
     horasTaller: curso.horasTaller || 0,
-    horasVirtual: curso.horasVirtual || 0
+    horasVirtual: curso.horasVirtual || 0,
+    // Nuevos
+    catalogo: curso.catalogo || '',
+    tipo_especifico: curso.tipo_especifico || '',
+    identificacion: curso.identificacion || '',
+    horario_sinfo: curso.horario_sinfo || '',
+    clasificacion_blackboard: curso.clasificacion_blackboard || '',
+    semanas: curso.semanas || 0,
+    evaluacion_semestral: curso.evaluacion_semestral || '',
+    horasSemestre: curso.horasSemestre || 0,
+    status: curso.status || '',
+    comentarios: curso.comentarios || '',
+    contenido_curricular: curso.contenido_curricular || ''
   }
   mostrarModal.value = true
 }
