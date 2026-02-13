@@ -40,6 +40,11 @@ const router = createRouter({
       component: () => import('../views/HorarioBloqueView.vue')
     },
     {
+      path: '/horarios/visuales',
+      name: 'horarios-visuales',
+      component: () => import('../views/HorariosVisualesView.vue')
+    },
+    {
       path: '/profesores',
       name: 'profesores',
       component: () => import('../views/ProfesoresView.vue')

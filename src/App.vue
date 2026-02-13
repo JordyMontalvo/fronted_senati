@@ -65,6 +65,13 @@
             <span>Horarios</span>
           </router-link>
 
+          <router-link to="/horarios/visuales" class="nav-tab">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+            </svg>
+            <span>📅 Visuales</span>
+          </router-link>
+
           <router-link to="/profesores" class="nav-tab">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
@@ -105,6 +112,9 @@
 
     <!-- Notificaciones Globales -->
     <ToastNotification ref="toastRef" />
+
+    <!-- Chatbot de Horarios -->
+    <ChatbotHorarios />
   </div>
 </template>
 
@@ -113,6 +123,7 @@ import { RouterView } from 'vue-router'
 import { onMounted, ref, provide } from 'vue'
 import { useAppStore } from './stores/app'
 import ToastNotification from './components/ToastNotification.vue'
+import ChatbotHorarios from './components/ChatbotHorarios.vue'
 
 const store = useAppStore()
 const toastRef = ref(null)
