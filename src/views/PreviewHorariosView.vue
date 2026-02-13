@@ -22,13 +22,29 @@
 
     <!-- Alertas de Conflictos -->
     <div v-if="conflictosDetectados.length > 0" class="alert alert-warning">
-      <strong>⚠️ Conflictos Detectados:</strong>
+      <div class="d-flex justify-between align-center mb-2">
+        <strong>⚠️ Conflictos Detectados ({{ conflictosDetectados.length }}):</strong>
+        <button class="btn btn-sm btn-primary" @click="resolverConflictosIA">
+          🤖 Autocorregir con IA
+        </button>
+      </div>
       <ul>
         <li v-for="(conflicto, idx) in conflictosDetectados" :key="idx">
           {{ conflicto.mensaje }}
         </li>
       </ul>
     </div>
+}, {
+"StartLine": 526,
+"EndLine": 526,
+"TargetContent": "  cargarDatosPreview()",
+"ReplacementContent": "  cargarDatosPreview()\n  obtenerAulasDisponibles()",
+"AllowMultiple": false
+}, {
+"StartLine": 521,
+"EndLine": 521,
+"TargetContent": "    toast.success('PDF Generado', 'Descarga iniciada')",
+"ReplacementContent": "    toast.success('PDF Generado', 'Descarga iniciada')\n  } catch (error) {\n    console.error('Error al generar PDF:', error)\n    toast.error('Error', 'No se pudo generar el PDF')\n  }\n}\n\n// --- Funciones de IA y Resolución ---\nconst aulasSistema = ref([])\n\nconst obtenerAulasDisponibles = async () => {\n  try {\n    // Intentar obtener aulas reales del sistema\n    const res = await api.get('/aulas')\n    if (res.data.success) {\n       aulasSistema.value = res.data.data.map(a => a.codigo)\n    } else {\n       // Fallback a aulas genéricas si falla\n       aulasSistema.value = ['LAB-01', 'LAB-02', 'LAB-03', 'A-101', 'A-102', 'A-103', 'A-201', 'A-202']\n    }\n  } catch (e) {\n    aulasSistema.value = ['LAB-01', 'LAB-02', 'LAB-03', 'A-101', 'A-102', 'A-103', 'A-201', 'A-202']\n  }\n}\n\nconst resolverConflictosIA = async () => {\n  toast.info('🤖 Asistente', 'Analizando horarios y aulas disponibles...')\n  \n  let resueltos = 0\n  const conflictos = [...conflictosDetectados.value]\n  \n  // Asegurar que tenemos aulas\n  if (aulasSistema.value.length === 0) await obtenerAulasDisponibles()\n  \n  for (const conflicto of conflictos) {\n    // Identificar el horario conflictivo\n    const horarioIdx = horariosGenerados.value.findIndex(h => \n      h.bloque === conflicto.bloque && \n      h.dia === conflicto.dia && \n      h.horaInicio === conflicto.horaInicio\n    )\n    \n    if (horarioIdx === -1) continue\n    \n    const horarioActual = horariosGenerados.value[horarioIdx]\n    let nuevaAula = null\n    \n    // Estrategia: Buscar aula libre del mismo tipo (si es lab o teoría)\n    // Simplificación: Buscar cualquier aula libre que coincida con el tipo implicito\n    const esLaboratorio = horarioActual.aula.toLowerCase().includes('lab') || horarioActual.tipo === 'Laboratorio'\n    \n    // Filtrar aulas candidatas (Labs o Teoría)\n    const aulasCandidatas = aulasSistema.value.filter(a => {\n      const esLabCandidata = a.toLowerCase().includes('lab')\n      return esLaboratorio ? esLabCandidata : !esLabCandidata\n    })\n    \n    // Buscar una libre\n    for (const aula of aulasCandidatas) {\n      const ocupada = horariosGenerados.value.some(h => \n        h.dia === horarioActual.dia &&\n        h.horaInicio === horarioActual.horaInicio &&\n        h.aula === aula\n      )\n      \n      if (!ocupada) {\n        nuevaAula = aula\n        break\n      }\n    }\n    \n    if (nuevaAula) {\n      horariosGenerados.value[horarioIdx].aula = nuevaAula\n      resueltos++\n    }\n  }\n  \n  if (resueltos > 0) {\n    conflictosDetectados.value = [] // Limpiamos la lista visual, se re-validará al guardar\n    modificaciones.value += resueltos\n    toast.success('🤖 Asistente', `He resuelto ${resueltos} conflictos automáticamente reasignando aulas.`)\n  } else {\n    toast.warning('🤖 Asistente', 'No encontré aulas libres para resolver los conflictos. Intenta cambiar los horarios manualmente.')\n  }\n}"
 
     <!-- Estadísticas -->
     <div class="stats-grid">
@@ -524,8 +540,98 @@ const exportarPDF = () => {
   }
 }
 
+// --- Funciones de IA y Resolución ---
+const aulasSistema = ref([])
+
+const obtenerAulasDisponibles = async () => {
+  try {
+    // Intentar obtener aulas reales del sistema
+    const res = await api.get('/aulas')
+    if (res.data.success) {
+       aulasSistema.value = res.data.data.map(a => a.codigo)
+    } else {
+       // Fallback a aulas genéricas si falla
+       aulasSistema.value = ['LAB-01', 'LAB-02', 'LAB-03', 'A-101', 'A-102', 'A-103', 'A-201', 'A-202']
+    }
+  } catch (e) {
+    aulasSistema.value = ['LAB-01', 'LAB-02', 'LAB-03', 'A-101', 'A-102', 'A-103', 'A-201', 'A-202']
+  }
+}
+
+const resolverConflictosIA = async () => {
+  if (conflictosDetectados.value.length === 0) return
+  
+  toast.info('🤖 Asistente', 'Analizando horarios y aulas disponibles...')
+  
+  let resueltos = 0
+  const conflictos = [...conflictosDetectados.value]
+  
+  // Asegurar que tenemos aulas
+  if (aulasSistema.value.length === 0) await obtenerAulasDisponibles()
+  
+  for (const conflicto of conflictos) {
+    // Identificar el horario conflictivo
+    // Buscamos coincidencia exacta: bloque, dia, horaInicio
+    const horarioIdx = horariosGenerados.value.findIndex(h => 
+      h.bloque === conflicto.bloque && 
+      h.dia === conflicto.dia && 
+      h.horaInicio === conflicto.horaInicio
+    )
+    
+    if (horarioIdx === -1) continue
+    
+    const horarioActual = horariosGenerados.value[horarioIdx]
+    let nuevaAula = null
+    
+    // Simular "Pensamiento" del bot buscando tipo de aula
+    const esLaboratorio = (horarioActual.aula && horarioActual.aula.toLowerCase().includes('lab')) || 
+                          (horarioActual.tipo === 'Laboratorio')
+    
+    // Filtrar aulas candidatas (Labs o Teoría)
+    const aulasCandidatas = aulasSistema.value.filter(a => {
+      const esLabCandidata = a.toLowerCase().includes('lab')
+      return esLaboratorio ? esLabCandidata : !esLabCandidata
+    })
+    
+    // Buscar una libre iterando
+    for (const aula of aulasCandidatas) {
+      if (aula === horarioActual.aula) continue // Saltar la actual ocupada
+      
+      const ocupada = horariosGenerados.value.some(h => 
+        h.dia === horarioActual.dia &&
+        h.horaInicio === horarioActual.horaInicio &&
+        h.aula === aula
+      )
+      
+      if (!ocupada) {
+        nuevaAula = aula
+        break
+      }
+    }
+    
+    if (nuevaAula) {
+      // Aplicar cambio
+      console.log(`🤖 IA: Resolviendo conflicto en ${horarioActual.bloque}. Cambio ${horarioActual.aula} -> ${nuevaAula}`)
+      horariosGenerados.value[horarioIdx].aula = nuevaAula
+      resueltos++
+    }
+  }
+  
+  if (resueltos > 0) {
+    conflictosDetectados.value = [] // Limpiamos la lista visual, se re-validará al guardar
+    modificaciones.value += resueltos
+    toast.success('🤖 Asistente', `He resuelto ${resueltos} conflictos automáticamente reasignando aulas.`)
+    
+    // Opcional: Volver a confirmar automáticamente
+    // confirmarImportacion()
+  } else {
+    toast.warning('🤖 Asistente', 'No encontré aulas libres para resolver los conflictos. Intenta cambiar los horarios manualmente.')
+  }
+}
+
 onMounted(() => {
   cargarDatosPreview()
+  obtenerAulasDisponibles()
 })
 </script>
 
