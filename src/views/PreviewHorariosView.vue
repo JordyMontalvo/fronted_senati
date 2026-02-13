@@ -79,7 +79,7 @@
           <select v-model="filtro.bloque">
             <option value="">Todos</option>
             <option v-for="bloque in bloquesGenerados" :key="bloque.codigo" :value="bloque.codigo">
-              {{ bloque.codigo }}
+              {{ bloque.codigo }} - {{ bloque.carrera }}
             </option>
           </select>
         </div>
@@ -106,7 +106,7 @@
 
     <!-- Vista de Calendario Simplificada -->
     <div class="card calendario-preview">
-      <h3>Calendario Semanal - {{ bloqueActual || 'Todos los bloques' }}</h3>
+      <h3>Calendario Semanal - {{ bloqueActual || 'Todos los bloques' }} <span v-if="carreraActual" class="subtitle-carrera">({{ carreraActual }})</span></h3>
       
       <div class="calendario-grid">
         <!-- Columna de horas -->
@@ -146,6 +146,7 @@
           <thead>
             <tr>
               <th>Bloque</th>
+              <th>Carrera</th>
               <th>Curso</th>
               <th>Profesor</th>
               <th>Aula</th>
@@ -158,6 +159,7 @@
           <tbody>
             <tr v-for="horario in horariosFiltrados" :key="horario.id">
               <td><span class="badge badge-primary">{{ horario.bloque }}</span></td>
+              <td>{{ getCarrera(horario.bloque) }}</td>
               <td>{{ horario.curso }}</td>
               <td>{{ horario.profesor }}</td>
               <td>{{ horario.aula }}</td>
@@ -277,6 +279,13 @@ const horasDisponibles = [
 // Computed
 const bloqueActual = computed(() => filtro.value.bloque || '')
 
+// Obtener carrera del bloque seleccionado
+const carreraActual = computed(() => {
+  if (!filtro.value.bloque) return ''
+  const bloque = bloquesGenerados.value.find(b => b.codigo === filtro.value.bloque)
+  return bloque ? bloque.carrera : ''
+})
+
 const horariosFiltrados = computed(() => {
   let resultado = [...horariosGenerados.value]
   
@@ -303,7 +312,13 @@ const horariosFiltrados = computed(() => {
 })
 
 // Métodos
+const getCarrera = (codigoBloque) => {
+  const bloque = bloquesGenerados.value.find(b => b.codigo === codigoBloque)
+  return bloque ? bloque.carrera : 'Sin carrera'
+}
+
 const cargarDatosPreview = () => {
+// ... resto del método cargarDatosPreview
   // Cargar datos del preview desde sessionStorage
   const previewData = sessionStorage.getItem('horariosPreview')
   
@@ -823,5 +838,12 @@ onMounted(() => {
 
 .alert li {
   margin: 0.25rem 0;
+}
+
+.subtitle-carrera {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.9em;
+  margin-left: 0.5rem;
 }
 </style>
