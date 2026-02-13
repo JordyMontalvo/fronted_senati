@@ -16,11 +16,11 @@
     <div class="card filters-card">
       <div class="filters-grid">
         <div class="filter-group">
-          <label>🏢 Zonal / Sede</label>
-          <select v-model="filtros.sede">
-            <option value="">Todas las Sedes</option>
-            <option v-for="sede in sedes" :key="sede._id" :value="sede._id">
-              {{ sede.nombre }}
+          <label>☀️ Turno</label>
+          <select v-model="filtros.turno">
+            <option value="">Todos los Turnos</option>
+            <option v-for="t in turnos" :key="t" :value="t">
+              {{ t }}
             </option>
           </select>
         </div>
@@ -171,12 +171,14 @@ import 'jspdf-autotable'
 // Estado
 const loading = ref(true)
 const horarios = ref([])
-const sedes = ref([])
+// const sedes = ref([]) // Eliminado por error 500
 const carreras = ref([])
 const profesores = ref([])
 
+const turnos = ['Mañana', 'Tarde', 'Noche']
+
 const filtros = reactive({
-  sede: '',
+  turno: '', // Reemplaza a sede
   carrera: '',
   semestre: '',
   profesor: ''
@@ -190,17 +192,15 @@ const itemsPerPage = 20
 onMounted(async () => {
   try {
     loading.value = true
-    // Cargar catálogos
-    const [resHorarios, resSedes, resCarreras, resProfesores] = await Promise.all([
+    // Cargar catálogos (Quitamos sedes que fallaba)
+    const [resHorarios, resCarreras, resProfesores] = await Promise.all([
       api.get('/horarios'),
-      api.get('/ubicaciones/sedes'), // Endpoint correcto para sedes
       api.get('/carreras'),
       api.get('/profesores')
     ])
     
     // Normalizar respuestas (algunas pueden venir en .data o .data.data)
     horarios.value = resHorarios.data.data || resHorarios.data || []
-    sedes.value = resSedes.data.data || resSedes.data || []
     carreras.value = resCarreras.data.data || resCarreras.data || []
     profesores.value = resProfesores.data.data || resProfesores.data || []
     
@@ -214,18 +214,23 @@ onMounted(async () => {
 // Filtrado
 const horariosFiltrados = computed(() => {
   return horarios.value.filter(h => {
-    // Filtro Sede (Indirecto a través del Aula)
-    // Nota: Necesitamos que el backend popule aula.sede o filtrar por coincidencia si no viene populado
-    // Por ahora asumimos que aula tiene sede_id o filtramos en memoria si tenemos la data
-    if (filtros.sede) {
-        // Como el endpoint de horarios tal vez no trae sede populada profundamente,
-        // verificamos si el aula pertenece a la sede seleccionada (usando catalogo de sedes/aulas si fuera necesario)
-        // Simplificación: Si el aula tiene objeto sede populado
-        if (h.aula?.sede?.toString() !== filtros.sede && h.aula?.sede?._id?.toString() !== filtros.sede) {
-             // Si el objeto aula no tiene la sede directa, puede ser complejo filtrar sin refetch.
-             // Omitiremos este filtro estricto por ahora si la data no está lista, 
-             // pero idealmente: return false
-        }
+    // Filtro Turno (Nuevo)
+    if (filtros.turno) {
+       // El turno suele estar en el bloque (subPeriodo o turno) o inferirse de la hora
+       // Usaremos la hora de inicio para inferir si no está explícito
+       const hora = parseInt(h.horaInicio.split(':')[0]);
+       let turnoDetectado = 'Mañana';
+       if (hora >= 13 && hora < 18) turnoDetectado = 'Tarde';
+       if (hora >= 18) turnoDetectado = 'Noche';
+       
+       // También verificamos si el bloque tiene la propiedad explícita
+       const turnoBloque = h.asignacion?.bloque?.subPeriodo || h.asignacion?.bloque?.turno;
+       
+       // Coincidencia laxa (compara lo detectado o lo del bloque)
+       const coincide = (turnoBloque && turnoBloque.toLowerCase().includes(filtros.turno.toLowerCase())) ||
+                        (turnoDetectado.toLowerCase() === filtros.turno.toLowerCase());
+                        
+       if (!coincide) return false;
     }
     
     // Filtro Carrera (A través del Bloque -> Carrera)
@@ -263,7 +268,7 @@ const filtrosActivosCount = computed(() => {
 })
 
 const limpiarFiltros = () => {
-  filtros.sede = ''
+  filtros.turno = ''
   filtros.carrera = ''
   filtros.semestre = ''
   filtros.profesor = ''
