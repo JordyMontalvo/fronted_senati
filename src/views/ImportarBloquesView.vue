@@ -157,35 +157,31 @@ const startGeneration = async () => {
   error.value = null
 
   try {
-    toast.info('Procesando', 'Importando bloques y asignando automáticamente...')
+    toast.info('Generando Vista Previa', 'Procesando bloques y generando horarios...')
     
-    const response = await api.post('/upload/bloques/importar-y-asignar', {
+    // Llamar al nuevo endpoint que genera preview sin guardar
+    const response = await api.post('/upload/bloques/generar-preview', {
       filepath: previewData.value.filepath
     })
 
     if (response.data.success) {
-      toast.success('¡Éxito! 🎉', response.data.message)
+      toast.success('¡Vista Previa Lista! 🎉', 'Revisa y modifica antes de confirmar')
       
-      // Mostrar estadísticas
-      const stats = `
-        📦 Bloques importados: ${response.data.importacion.bloquesCreados}
-        📚 Asignaciones: ${response.data.asignacion.asignacionesCreadas}
-        📅 Horarios: ${response.data.asignacion.horariosCreados}
-      `
-      console.log('Estadísticas:', stats)
+      // Guardar datos en sessionStorage para pasarlos al preview
+      sessionStorage.setItem('horariosPreview', JSON.stringify(response.data))
       
-      // Limpiar el formulario después de 2 segundos
+      // Redirigir a la vista de preview
       setTimeout(() => {
-        removeFile()
-      }, 2000)
+        window.location.href = '/horarios/preview'
+      }, 1000)
       
     } else {
       error.value = response.data.message
       toast.error('Error', response.data.message)
     }
   } catch (err) {
-    console.error('Error en asignación:', err)
-    error.value = err.response?.data?.message || 'Error al procesar la asignación automática'
+    console.error('Error en generación:', err)
+    error.value = err.response?.data?.message || 'Error al generar vista previa'
     toast.error('Error', error.value)
   } finally {
     uploading.value = false
