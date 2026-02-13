@@ -147,8 +147,49 @@ const uploadFile = async () => {
   }
 }
 
-const startGeneration = () => {
-  toast.info('Próximamente', 'Aquí iniciaremos el proceso con la IA')
+const startGeneration = async () => {
+  if (!previewData.value || !previewData.value.filepath) {
+    toast.error('Error', 'No hay archivo para procesar')
+    return
+  }
+
+  uploading.value = true
+  error.value = null
+
+  try {
+    toast.info('Procesando', 'Importando bloques y asignando automáticamente...')
+    
+    const response = await api.post('/upload/bloques/importar-y-asignar', {
+      filepath: previewData.value.filepath
+    })
+
+    if (response.data.success) {
+      toast.success('¡Éxito! 🎉', response.data.message)
+      
+      // Mostrar estadísticas
+      const stats = `
+        📦 Bloques importados: ${response.data.importacion.bloquesCreados}
+        📚 Asignaciones: ${response.data.asignacion.asignacionesCreadas}
+        📅 Horarios: ${response.data.asignacion.horariosCreados}
+      `
+      console.log('Estadísticas:', stats)
+      
+      // Limpiar el formulario después de 2 segundos
+      setTimeout(() => {
+        removeFile()
+      }, 2000)
+      
+    } else {
+      error.value = response.data.message
+      toast.error('Error', response.data.message)
+    }
+  } catch (err) {
+    console.error('Error en asignación:', err)
+    error.value = err.response?.data?.message || 'Error al procesar la asignación automática'
+    toast.error('Error', error.value)
+  } finally {
+    uploading.value = false
+  }
 }
 </script>
 
