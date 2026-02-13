@@ -188,7 +188,7 @@
               <label>Semestre *</label>
               <select v-model="formulario.semestre" class="form-input" required>
                 <option value="">Seleccionar</option>
-                <option v-for="i in 6" :key="i" :value="'I'.repeat(i)">Semestre {{ 'I'.repeat(i) }}</option>
+                <option v-for="sem in semestres" :key="sem" :value="sem">{{ sem }}</option>
               </select>
             </div>
           </div>
