@@ -193,7 +193,7 @@ onMounted(async () => {
     // Cargar catálogos
     const [resHorarios, resSedes, resCarreras, resProfesores] = await Promise.all([
       api.get('/horarios'),
-      api.get('/ubicaciones'), // Asumiendo endpoint de sedes/ubicaciones
+      api.get('/ubicaciones/sedes'), // Endpoint correcto para sedes
       api.get('/carreras'),
       api.get('/profesores')
     ])
@@ -230,18 +230,27 @@ const horariosFiltrados = computed(() => {
     
     // Filtro Carrera (A través del Bloque -> Carrera)
     if (filtros.carrera) {
-      const carreraId = h.asignacion?.bloque?.carrera?._id || h.asignacion?.bloque?.carrera
+      // Si no tenemos bloque o carrera, no podemos filtrar, retornar falso si hay filtro activo      
+      if (!h.asignacion?.bloque?.carrera) return false
+      
+      const carreraObj = h.asignacion.bloque.carrera
+      const carreraId = carreraObj._id || carreraObj
+      
       if (carreraId?.toString() !== filtros.carrera) return false
     }
     
     // Filtro Semestre (A través del Bloque)
     if (filtros.semestre) {
-      if (parseInt(h.asignacion?.bloque?.semestre) !== parseInt(filtros.semestre)) return false
+      if (!h.asignacion?.bloque?.semestre) return false
+      if (parseInt(h.asignacion.bloque.semestre) !== parseInt(filtros.semestre)) return false
     }
     
     // Filtro Profesor
     if (filtros.profesor) {
-      const profId = h.asignacion?.profesor?._id || h.asignacion?.profesor
+      // Si no hay profesor asignado, excluimos si se filtra por uno específico
+      if (!h.asignacion?.profesor) return false
+      
+      const profId = h.asignacion.profesor._id || h.asignacion.profesor
       if (profId?.toString() !== filtros.profesor) return false
     }
     
