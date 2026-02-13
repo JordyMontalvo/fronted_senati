@@ -287,55 +287,54 @@ const horariosFiltrados = computed(() => {
 
 // Métodos
 const cargarDatosPreview = () => {
-  // Simular datos generados (en producción vendrían del backend)
-  // Estos datos se generarían después de analizar el Excel pero SIN guardar en BD
+  // Cargar datos del preview desde sessionStorage
+  const previewData = sessionStorage.getItem('horariosPreview')
   
-  // Ejemplo de datos simulados
-  const bloques = [
-    { codigo: 'BLQ-ADM-I-M-001', carrera: 'Administración', turno: 'mañana' },
-    { codigo: 'BLQ-ELE-I-T-002', carrera: 'Electrónica', turno: 'tarde' }
-  ]
-  
-  bloquesGenerados.value = bloques
-  
-  // Generar horarios de ejemplo
-  const horariosEjemplo = []
-  let id = 1
-  
-  bloques.forEach(bloque => {
-    dias.forEach((dia, indexDia) => {
-      if (indexDia < 5) { // Solo lunes a viernes
-        const horasBloque = bloque.turno === 'mañana' 
-          ? ['07:00-09:00', '09:00-11:00', '11:00-13:00']
-          : ['14:00-16:00', '16:00-18:00', '18:00-20:00']
-        
-        horasBloque.forEach((horario, i) => {
-          const [inicio, fin] = horario.split('-')
-          horariosEjemplo.push({
-            id: id++,
-            bloque: bloque.codigo,
-            curso: `Curso ${i + 1}`,
-            profesor: `Profesor ${i + 1}`,
-            aula: `A-${100 + i}`,
-            dia: dia,
-            horaInicio: inicio,
-            horaFin: fin,
-            tipo: i === 0 ? 'Teoría' : i === 1 ? 'Taller' : 'Laboratorio'
-          })
-        })
-      }
-    })
-  })
-  
-  horariosGenerados.value = horariosEjemplo
-  
-  datosPrev.value = {
-    bloques: bloques.length,
-    asignaciones: bloques.length * 6, // Estimado
-    horarios: horariosEjemplo.length
+  if (!previewData) {
+    toast.error('Error', 'No hay datos de preview disponibles')
+    router.push('/importar-excel')
+    return
   }
   
-  toast.info('Vista Previa', `${horariosEjemplo.length} horarios generados para revisión`)
+  try {
+    const data = JSON.parse(previewData)
+    
+    if (data.success && data.preview) {
+      // Cargar bloques
+      bloquesGenerados.value = data.preview.bloques || []
+      
+      // Cargar horarios
+      const horariosFromBackend = data.preview.horarios || []
+      
+      // Transformar al formato esperado por la vista
+      horariosGenerados.value = horariosFromBackend.map(h => ({
+        id: h.id,
+        bloque: h.bloque,
+        curso: h.curso,
+        profesor: h.profesor,
+        aula: h.aula,
+        dia: h.dia,
+        horaInicio: h.horaInicio,
+        horaFin: h.horaFin,
+        tipo: h.tipo
+      }))
+      
+      // Actualizar estadísticas
+      datosPrev.value = {
+        bloques: data.stats.bloques || 0,
+        asignaciones: data.stats.asignaciones || 0,
+        horarios: data.stats.horarios || 0
+      }
+      
+      toast.success('Vista Previa Cargada', `${horariosGenerados.value.length} horarios listos para revisar`)
+    } else {
+      throw new Error('Datos de preview inválidos')
+    }
+  } catch (error) {
+    console.error('Error al cargar preview:', error)
+    toast.error('Error', 'No se pudieron cargar los datos del preview')
+    router.push('/importar-excel')
+  }
 }
 
 const obtenerHorarioFiltrado = (dia, hora) => {
