@@ -226,6 +226,13 @@
               <input v-model.number="formulario.horasVirtual" type="number" class="form-input" min="0">
             </div>
           </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Evaluación Semestral</label>
+              <input v-model.number="formulario.evaluacion_semestral" type="number" class="form-input" min="0">
+            </div>
+          </div>
           
           <div class="form-info">
             <div><strong>Semanal:</strong> {{ horasTotalesFormulario }}h</div>
@@ -368,8 +375,11 @@ const horasTotales = computed(() => {
 const horasTotalesFormulario = computed(() => {
   return (formulario.value.horasTeoria || 0) + 
          (formulario.value.horasTaller || 0) + 
-         (formulario.value.horasVirtual || 0)
+         (formulario.value.horasVirtual || 0) + 
+         (formulario.value.evaluacion_semestral || 0)
 })
+
+
 
 function abrirModalNuevo() {
   cursoEditando.value = null
