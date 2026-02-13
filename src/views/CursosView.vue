@@ -399,7 +399,7 @@ onMounted(async () => {
   loading.value = true
   await Promise.all([
     store.fetchCarreras(),
-    store.fetchCursos()
+    store.fetchCursos({ limit: 0 }) // Cargar todos los cursos sin paginación backend
   ])
   loading.value = false
 })
