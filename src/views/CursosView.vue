@@ -328,12 +328,19 @@ const formulario = ref({
 const carreras = computed(() => store.carreras)
 const cursos = computed(() => store.cursos)
 
+// Helper para ordenar romanos
+const romanMap = {
+  'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 
+  'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10
+}
+const romanToInt = (s) => romanMap[s] || 99
+
 const semestres = computed(() => {
   const sems = new Set()
   cursos.value.forEach(c => {
     if (c.semestre) sems.add(c.semestre)
   })
-  return Array.from(sems).sort()
+  return Array.from(sems).sort((a, b) => romanToInt(a) - romanToInt(b))
 })
 
 const cursosFiltrados = computed(() => {
