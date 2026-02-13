@@ -32,17 +32,19 @@
       </router-link>
 
       <!-- Card 3: Reportes (Nuevos próximamente) -->
-      <div class="action-card disabled-action">
-        <div class="action-icon">
+      <!-- Card 3: Reportes -->
+      <router-link to="/reportes" class="action-card reports-action">
+        <div class="action-icon reports-icon">
           <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
             <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
           </svg>
         </div>
+        <div class="badge-new" style="background: #e0f2fe; color: #0369a1;">Beta 📊</div>
         <h3>Reportes</h3>
-        <p>Próximamente: Estadísticas detalladas y exportación de datos.</p>
-        <span class="badge-soon">Pronto</span>
-      </div>
+        <p>Visualiza estadísticas, carga horaria y exporta reportes detallados.</p>
+        <span class="action-arrow">→</span>
+      </router-link>
     </div>
   </div>
 </template>
@@ -217,6 +219,20 @@ onMounted(async () => {
   border-radius: 9999px;
   text-transform: uppercase;
   margin-top: auto;
+}
+
+.reports-action {
+  background: linear-gradient(145deg, #f0f9ff, #ffffff);
+  border: 1px solid #bae6fd;
+}
+
+.reports-action:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+}
+
+.reports-icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
 
 @media (max-width: 768px) {
