@@ -1,6 +1,6 @@
 <template>
-  <div class="chatbot-container">
-    <div class="chatbot-header">
+  <div class="chatbot-container" :class="{ minimizado }">
+    <div class="chatbot-header" @click="minimizado && minimizar()">
       <div class="header-content">
         <div class="bot-avatar">🤖</div>
         <div>
@@ -8,7 +8,7 @@
           <span class="status">● En línea</span>
         </div>
       </div>
-      <button class="btn-minimize" @click="minimizar">─</button>
+      <button class="btn-minimize" @click.stop="minimizar" :title="minimizado ? 'Maximizar' : 'Minimizar'">{{ minimizado ? '□' : '─' }}</button>
     </div>
 
     <div class="chat-messages" ref="messagesContainer">
@@ -83,6 +83,7 @@ const escribiendo = ref(false)
 const procesando = ref(false)
 const mostrarSugerencias = ref(true)
 const messagesContainer = ref(null)
+const minimizado = ref(false)
 
 // Sugerencias de comandos
 const sugerencias = ref([
@@ -354,7 +355,11 @@ const mostrarAyuda = () => {
 }
 
 const minimizar = () => {
-  toast.info('Chatbot', 'Minimizado (función pendiente)')
+  minimizado.value = !minimizado.value
+  
+  if (minimizado.value) {
+    toast.info('Chatbot minimizado', 'Click en el header para maximizar')
+  }
 }
 
 // Inicializar
@@ -387,6 +392,20 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chatbot-container.minimizado {
+  height: 70px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.chatbot-container.minimizado .chat-messages,
+.chatbot-container.minimizado .chat-suggestions,
+.chatbot-container.minimizado .chat-input,
+.chatbot-container.minimizado .chat-footer {
+  display: none;
 }
 
 .chatbot-header {
@@ -397,6 +416,17 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: all 0.2s;
+}
+
+.chatbot-container.minimizado .chatbot-header {
+  cursor: pointer;
+  border-radius: 16px;
+}
+
+.chatbot-container.minimizado .chatbot-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .header-content {
