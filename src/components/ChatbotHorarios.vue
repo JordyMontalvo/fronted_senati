@@ -202,25 +202,30 @@ const buscarHorario = async (comando) => {
       
       // Buscar el bloque
       const bloquesRes = await api.get('/bloques')
-      const bloque = bloquesRes.data.find(b => 
+      // Ajuste para estructura { success: true, data: [...] }
+      const listaBloques = bloquesRes.data.data || bloquesRes.data
+      
+      const bloque = listaBloques.find(b => 
         b.codigo.toLowerCase() === codigoBloque.toLowerCase()
       )
       
-      if (bloque) {
+        if (bloque) {
         // Buscar horarios del bloque
         const horariosRes = await api.get('/horarios', {
           params: { bloque: bloque._id }
         })
         
-        if (horariosRes.data.length > 0) {
-          let html = `✅ Encontré <strong>${horariosRes.data.length} horarios</strong> para el bloque <strong>${bloque.codigo}</strong>:<br><br>`
+        const listaHorarios = horariosRes.data.data || horariosRes.data
+        
+        if (listaHorarios.length > 0) {
+          let html = `✅ Encontré <strong>${listaHorarios.length} horarios</strong> para el bloque <strong>${bloque.codigo}</strong>:<br><br>`
           
-          horariosRes.data.slice(0, 5).forEach((h, i) => {
+          listaHorarios.slice(0, 5).forEach((h, i) => {
             html += `${i + 1}. ${h.diaSemana} ${h.horaInicio}-${h.horaFin}<br>`
           })
           
-          if (horariosRes.data.length > 5) {
-            html += `<br>...y ${horariosRes.data.length - 5} más.`
+          if (listaHorarios.length > 5) {
+            html += `<br>...y ${listaHorarios.length - 5} más.`
           }
           
           agregarMensaje(html)
@@ -245,7 +250,7 @@ const buscarHorario = async (comando) => {
 const listarBloques = async () => {
   try {
     const response = await api.get('/bloques')
-    const bloques = response.data
+    const bloques = response.data.data || response.data
     
     if (bloques.length > 0) {
       let html = `📦 <strong>Bloques disponibles</strong> (${bloques.length} total):<br><br>`
@@ -270,7 +275,7 @@ const listarBloques = async () => {
 const listarProfesores = async () => {
   try {
     const response = await api.get('/profesores')
-    const profesores = response.data
+    const profesores = response.data.data || response.data
     
     if (profesores.length > 0) {
       let html = `👨‍🏫 <strong>Profesores disponibles</strong> (${profesores.length} total):<br><br>`
