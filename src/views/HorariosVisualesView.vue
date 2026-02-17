@@ -231,10 +231,11 @@ const cargarHorarios = async () => {
     if (filtros.value.aulaId) params.aula = filtros.value.aulaId
     
     const response = await api.get('/horarios', { params })
+    const listaHorarios = Array.isArray(response.data) ? response.data : (response.data.data || [])
     
     // Expandir datos de cada horario
     const horariosExpandidos = await Promise.all(
-      response.data.map(async (horario) => {
+      listaHorarios.map(async (horario) => {
         try {
           // Obtener la asignación completa
           const asignacionRes = await api.get(`/asignaciones/${horario.asignacion}`)
