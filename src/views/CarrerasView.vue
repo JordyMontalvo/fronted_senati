@@ -92,8 +92,12 @@
         </table>
 
         <div v-if="carrerasFiltradas.length === 0" class="empty-state">
-           <div class="empty-icon">📂</div>
-           <p>No se encontraron carreras que coincidan con la búsqueda</p>
+           <div class="empty-icon">🎓</div>
+           <h3>Catálogo de carreras vacío</h3>
+           <p>Comienza registrando las carreras profesionales para habilitar la creación de cursos y bloques.</p>
+           <button class="btn btn-primary" @click="abrirModalNuevo">
+             Añadir Nueva Carrera
+           </button>
         </div>
       </div>
     </div>

@@ -59,8 +59,12 @@
       </div>
 
       <div v-if="periodos.length === 0" class="empty-state">
-        <div class="empty-icon">📂</div>
-        <p>No se han configurado períodos académicos</p>
+        <div class="empty-icon">📅</div>
+        <h3>No hay calendarios configurados</h3>
+        <p>Los períodos son la base de toda la programación. Crea el primer ciclo académico para comenzar.</p>
+        <button class="btn btn-primary" @click="abrirModalNuevo">
+          Configurar Primer Ciclo
+        </button>
       </div>
     </div>
 

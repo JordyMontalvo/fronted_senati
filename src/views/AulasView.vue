@@ -98,8 +98,12 @@
       </div>
 
       <div v-if="aulasFiltradas.length === 0" class="empty-state">
-        <div class="empty-icon">📂</div>
-        <p>No se encontraron ambientes que coincidan con la búsqueda</p>
+        <div class="empty-icon">🏢</div>
+        <h3>No hay ambientes disponibles</h3>
+        <p>Aún no has registrado aulas o laboratorios en este catálogo.</p>
+        <button class="btn btn-primary" @click="abrirModalNuevo">
+          Registrar Primer Ambiente
+        </button>
       </div>
     </div>
 

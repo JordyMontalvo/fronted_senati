@@ -89,8 +89,12 @@
       </div>
 
       <div v-if="profesoresFiltrados.length === 0" class="empty-state">
-        <div class="empty-icon">📂</div>
-        <p>No se encontraron registros para esta búsqueda</p>
+        <div class="empty-icon">👨‍🏫</div>
+        <h3>Sin docentes registrados</h3>
+        <p>No hay especialistas en la base de datos para este filtro.</p>
+        <button class="btn btn-primary" @click="abrirModalNuevo">
+          Registrar Especialista
+        </button>
       </div>
     </div>
 

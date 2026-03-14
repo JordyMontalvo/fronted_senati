@@ -54,6 +54,7 @@
 
     <!-- Contenido Principal -->
     <main class="main-container">
+      <Breadcrumbs v-if="$route.path !== '/'" />
       <RouterView v-slot="{ Component }">
         <transition name="page-fade" mode="out-in">
           <component :is="Component" />
@@ -72,6 +73,7 @@ import { onMounted, ref, provide, watch } from 'vue'
 import { useAppStore } from './stores/app'
 import ToastNotification from './components/ToastNotification.vue'
 import ChatbotHorarios from './components/ChatbotHorarios.vue'
+import Breadcrumbs from './components/Breadcrumbs.vue'
 
 const store = useAppStore()
 const toastRef = ref(null)

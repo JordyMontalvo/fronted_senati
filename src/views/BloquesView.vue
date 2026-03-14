@@ -125,7 +125,11 @@
 
       <div v-if="bloquesFiltrados.length === 0" class="empty-state">
         <div class="empty-icon">📂</div>
-        <p>No se encontraron bloques activos para los criterios seleccionados</p>
+        <h3>No hay bloques configurados</h3>
+        <p>Aún no has creado NRCs o bloques para este período. Los bloques agrupan a los estudiantes para sus horarios.</p>
+        <button class="btn btn-primary" @click="abrirModalNuevo">
+          Crear Primer Bloque
+        </button>
       </div>
     </div>
 

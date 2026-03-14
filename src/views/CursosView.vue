@@ -108,8 +108,12 @@
         </table>
 
         <div v-if="cursosFiltrados.length === 0" class="empty-state">
-           <div class="empty-icon">📂</div>
-           <p>No se encontraron cursos que coincidan con los filtros</p>
+           <div class="empty-icon">📚</div>
+           <h3>Malla curricular vacía</h3>
+           <p>No hay cursos registrados que coincidan con los filtros actuales. Registra las unidades formativas para los bloques.</p>
+           <button class="btn btn-primary" @click="abrirModalNuevo">
+             Añadir Primer Curso
+           </button>
         </div>
       </div>
     </div>
