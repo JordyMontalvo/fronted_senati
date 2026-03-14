@@ -1,137 +1,115 @@
 <template>
-  <div class="periodos-view">
+  <div class="periodos-view fadeIn">
     <div class="page-header">
-      <div>
-        <h1>📅 Períodos Académicos</h1>
-        <p>Gestiona los ciclos académicos</p>
+      <div class="header-content">
+        <h1 class="text-gradient">📅 Ciclos Académicos</h1>
+        <p>Configuración de períodos lectivos y ventanas de programación</p>
       </div>
-      <button class="btn btn-primary" @click="abrirModalNuevo">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+      <button class="btn btn-premium" @click="abrirModalNuevo">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+          <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Nuevo Período
+        <span>Nuevo Ciclo</span>
       </button>
     </div>
 
-    <!-- Grid de Períodos -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Cargando períodos...</p>
+    <!-- Grid de Períodos Premium -->
+    <div v-if="loading" class="state-container">
+      <div class="spinner-modern"></div>
+      <p>Consultando cronogramas académicos...</p>
     </div>
 
     <div v-else class="periodos-grid">
       <div 
         v-for="periodo in periodosPaginados" 
         :key="periodo._id" 
-        class="periodo-card"
-        :class="{ 'periodo-activo': periodo.estado === 'activo' }"
+        class="periodo-glass-card"
+        :class="{ 'is-active': periodo.estado === 'activo' }"
       >
-        <div class="periodo-header">
-          <div class="periodo-icono">
-            <svg width="32" height="32" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <span :class="['estado-badge', `estado-${periodo.estado}`]">
-            {{ periodo.estado }}
+        <div class="card-glow" v-if="periodo.estado === 'activo'"></div>
+        
+        <div class="periodo-top">
+          <div class="p-icon-box">📅</div>
+          <span :class="['state-badge', periodo.estado]">
+            {{ periodo.estado === 'activo' ? 'Ciclo Actual' : periodo.estado }}
           </span>
         </div>
 
-        <div class="periodo-info">
-          <div class="periodo-codigo">{{ periodo.codigo }}</div>
+        <div class="periodo-body">
+          <span class="p-code">{{ periodo.codigo }}</span>
           <h3>{{ periodo.nombre }}</h3>
 
-          <div class="periodo-fechas">
-            <div class="fecha-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-              </svg>
-              <div>
-                <div class="fecha-label">Inicio:</div>
-                <div class="fecha-valor">{{ formatearFecha(periodo.fechaInicio) }}</div>
-              </div>
+          <div class="timeline-box">
+            <div class="time-block">
+              <span class="lab">Apertura</span>
+              <span class="date">{{ formatearFecha(periodo.fechaInicio) }}</span>
             </div>
-
-            <div class="fecha-divider">→</div>
-
-            <div class="fecha-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-              </svg>
-              <div>
-                <div class="fecha-label">Fin:</div>
-                <div class="fecha-valor">{{ formatearFecha(periodo.fechaFin) }}</div>
-              </div>
+            <div class="time-arrow">→</div>
+            <div class="time-block end">
+              <span class="lab">Cierre</span>
+              <span class="date">{{ formatearFecha(periodo.fechaFin) }}</span>
             </div>
           </div>
         </div>
 
-        <div class="periodo-acciones">
-          <button class="btn btn-secondary btn-sm" @click="editarPeriodo(periodo)">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-            </svg>
-            Editar
-          </button>
-          <button class="btn btn-secondary btn-sm btn-danger" @click="eliminarPeriodo(periodo)">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9z" clip-rule="evenodd"/>
-            </svg>
-            Eliminar
-          </button>
+        <div class="periodo-footer">
+          <button class="action-btn-p secondary" @click="editarPeriodo(periodo)">Configurar</button>
+          <button class="action-btn-p danger" @click="eliminarPeriodo(periodo)">Eliminar</button>
         </div>
       </div>
 
-      <p v-if="periodos.length === 0" class="empty-state">
-        📭 No hay períodos registrados
-      </p>
+      <div v-if="periodos.length === 0" class="empty-state">
+        <div class="empty-icon">📂</div>
+        <p>No se han configurado períodos académicos</p>
+      </div>
     </div>
 
     <!-- Paginación -->
-    <Pagination 
-      v-if="periodos.length > 0"
-      :current-page="paginaActual"
-      :per-page="porPagina"
-      :total="periodos.length"
-      @update:current-page="paginaActual = $event"
-    />
+    <div class="pagination-wrapper">
+      <Pagination 
+        v-if="periodos.length > 0"
+        :current-page="paginaActual"
+        :per-page="porPagina"
+        :total="periodos.length"
+        @update:current-page="paginaActual = $event"
+      />
+    </div>
 
-    <!-- Modal -->
+    <!-- Modal Moderno -->
     <Modal
       v-model="mostrarModal"
-      :titulo="periodoEditando ? 'Editar Período' : 'Nuevo Período'"
+      :titulo="periodoEditando ? 'Actualizar Ciclo' : 'Nuevo Ciclo Académico'"
       :loading="guardando"
       @guardar="guardarPeriodo"
     >
       <form @submit.prevent="guardarPeriodo" class="form-modal">
         <div class="form-group">
-          <label>Código *</label>
-          <input v-model="formulario.codigo" type="text" class="form-input" placeholder="202610" required>
+          <label>Identificador de Período *</label>
+          <input v-model="formulario.codigo" type="text" class="form-input" placeholder="Ej: 202610" required>
         </div>
 
         <div class="form-group">
-          <label>Nombre *</label>
-          <input v-model="formulario.nombre" type="text" class="form-input" placeholder="Período 2026-1" required>
+          <label>Nombre Descriptivo *</label>
+          <input v-model="formulario.nombre" type="text" class="form-input" placeholder="Ej: Período 2026-1" required>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Fecha Inicio *</label>
+            <label>Inicio de Ciclo *</label>
             <input v-model="formulario.fechaInicio" type="date" class="form-input" required>
           </div>
           <div class="form-group">
-            <label>Fecha Fin *</label>
+            <label>Término de Ciclo *</label>
             <input v-model="formulario.fechaFin" type="date" class="form-input" required>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Estado *</label>
+          <label>Estado de la Ventana</label>
           <select v-model="formulario.estado" class="form-input" required>
-            <option value="">Seleccionar estado</option>
-            <option value="planificado">Planificado</option>
-            <option value="activo">Activo</option>
-            <option value="cerrado">Cerrado</option>
+            <option value="planificado">Planificación (Cerrado)</option>
+            <option value="activo">Activo (Abierto)</option>
+            <option value="cerrado">Histórico (Archivado)</option>
           </select>
         </div>
       </form>
@@ -151,40 +129,25 @@ const guardando = ref(false)
 const mostrarModal = ref(false)
 const periodoEditando = ref(null)
 const paginaActual = ref(1)
-const porPagina = ref(10)
+const porPagina = ref(12)
 
 const formulario = ref({
-  codigo: '',
-  nombre: '',
-  fechaInicio: '',
-  fechaFin: '',
-  estado: 'planificado'
+  codigo: '', nombre: '', fechaInicio: '', fechaFin: '', estado: 'planificado'
 })
 
 const periodosPaginados = computed(() => {
-  const inicio = (paginaActual.value - 1) * porPagina.value
-  const fin = inicio + porPagina.value
-  return periodos.value.slice(inicio, fin)
+  const skip = (paginaActual.value - 1) * porPagina.value
+  return periodos.value.slice(skip, skip + porPagina.value)
 })
 
 function formatearFecha(fecha) {
-  if (!fecha) return 'N/A'
-  return new Date(fecha).toLocaleDateString('es-PE', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
+  if (!fecha) return '---'
+  return new Date(fecha).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function abrirModalNuevo() {
   periodoEditando.value = null
-  formulario.value = {
-    codigo: '',
-    nombre: '',
-    fechaInicio: '',
-    fechaFin: '',
-    estado: 'planificado'
-  }
+  formulario.value = { codigo: '', nombre: '', fechaInicio: '', fechaFin: '', estado: 'planificado' }
   mostrarModal.value = true
 }
 
@@ -203,274 +166,106 @@ function editarPeriodo(periodo) {
 async function guardarPeriodo() {
   try {
     guardando.value = true
-    
-    if (periodoEditando.value) {
-      await periodosService.update(periodoEditando.value._id, formulario.value)
-    } else {
-      await periodosService.create(formulario.value)
-    }
-    
+    if (periodoEditando.value) await periodosService.update(periodoEditando.value._id, formulario.value)
+    else await periodosService.create(formulario.value)
     await cargarPeriodos()
     mostrarModal.value = false
-  } catch (error) {
-    console.error('Error guardando período:', error)
-    alert('Error al guardar el período')
-  } finally {
-    guardando.value = false
-  }
+  } catch (err) { console.error(err) }
+  finally { guardando.value = false }
 }
 
 async function eliminarPeriodo(periodo) {
-  if (!confirm(`¿Eliminar el período "${periodo.nombre}"?`)) return
-  
+  if (!confirm(`¿Eliminar período "${periodo.nombre}"?`)) return
   try {
     await periodosService.delete(periodo._id)
     await cargarPeriodos()
-  } catch (error) {
-    console.error('Error eliminando período:', error)
-    alert('Error al eliminar el período')
-  }
+  } catch (err) { console.error(err) }
 }
 
 async function cargarPeriodos() {
   try {
     loading.value = true
     const response = await periodosService.getAll()
-    periodos.value = response.data.data.sort((a, b) => {
+    periodos.value = (response.data.data || []).sort((a, b) => {
       if (a.estado === 'activo') return -1
-      if (b.estado === 'activo') return 1
       return new Date(b.fechaInicio) - new Date(a.fechaInicio)
     })
-  } catch (error) {
-    console.error('Error cargando períodos:', error)
-  } finally {
-    loading.value = false
-  }
+  } catch (err) { console.error(err) }
+  finally { loading.value = false }
 }
 
-onMounted(() => {
-  cargarPeriodos()
-})
+onMounted(() => cargarPeriodos())
 </script>
 
 <style scoped>
-.periodos-view {
-  max-width: 1400px;
-  margin: 0 auto;
-}
+.periodos-view { max-width: 1400px; margin: 0 auto; }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; }
+.header-content h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+.header-content p { color: var(--text-muted); font-size: 1.1rem; }
 
-.page-header h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-}
-
-.page-header p {
-  color: var(--gray);
-}
-
-.periodos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.periodo-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: var(--shadow);
-  transition: all 0.3s;
-  border: 3px solid transparent;
-}
-
-.periodo-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.periodo-card.periodo-activo {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
-}
-
-.periodo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.periodo-icono {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+.btn-premium {
+  background: linear-gradient(135deg, var(--accent), #FF8E53);
   color: white;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.estado-badge {
-  padding: 0.375rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.estado-badge.estado-activo {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.estado-badge.estado-cerrado {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.estado-badge.estado-planificado {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.periodo-codigo {
-  font-size: 1.5rem;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
   font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 0.5rem;
-}
-
-.periodo-info h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: var(--dark);
-}
-
-.periodo-fechas {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: var(--light-gray);
-  border-radius: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.fecha-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.fecha-item svg {
-  color: var(--primary);
-  flex-shrink: 0;
-}
+.periodos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
 
-.fecha-label {
-  font-size: 0.75rem;
-  color: var(--gray);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.fecha-valor {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--dark);
-}
-
-.fecha-divider {
-  font-size: 1.5rem;
-  color: var(--gray);
-  font-weight: 300;
-}
-
-.periodo-acciones {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
-.btn-danger {
-  color: var(--danger);
-}
-
-.btn-danger:hover {
-  background: #fee2e2;
-  color: var(--danger);
-}
-
-.form-modal {
+.periodo-glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  transition: all 0.3s;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+.periodo-glass-card.is-active { border-color: var(--accent); background: rgba(242, 101, 34, 0.05); }
+.card-glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 50% 0%, rgba(242, 101, 34, 0.2), transparent 70%); border-radius: 1.5rem; pointer-events: none; }
 
-.form-group label {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--dark);
-}
+.periodo-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.p-icon-box { font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 1rem; }
 
-.form-input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
+.state-badge { padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; }
+.state-badge.activo { background: #10b981; color: white; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+.state-badge.planificado { background: #f59e0b; color: white; }
+.state-badge.cerrado { background: #64748b; color: white; }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+.p-code { font-size: 1.5rem; font-weight: 900; color: var(--accent); display: block; }
+.periodo-body h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 1.5rem; }
+
+.timeline-box { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  background: rgba(0,0,0,0.15); 
+  padding: 1rem; 
+  border-radius: 1.25rem; 
+  margin-bottom: 1.5rem; 
 }
+.time-block { display: flex; flex-direction: column; }
+.time-block .lab { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+.time-block .date { font-size: 0.85rem; font-weight: 700; }
+.time-arrow { color: var(--accent); font-weight: 900; }
+
+.periodo-footer { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.action-btn-p { padding: 0.75rem; border-radius: 1rem; border: 1px solid var(--border); background: var(--bg-main); font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+.action-btn-p.secondary:hover { border-color: var(--accent); color: var(--accent); }
+.action-btn-p.danger:hover { background: #ef4444; color: white; border-color: #ef4444; }
 
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .periodos-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .periodo-fechas {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .fecha-divider {
-    display: none;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+  .periodos-grid { grid-template-columns: 1fr; }
 }
 </style>
