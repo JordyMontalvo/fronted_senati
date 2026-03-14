@@ -88,6 +88,12 @@
           </div>
           <div class="header-actions">
              <button class="btn-refresh" @click="cargarAsignaciones">🔄 Sincronizar</button>
+             <button class="btn-automation magic" @click="autoAsignarBloqueActual" :disabled="guardando">
+               🤖 {{ guardando ? 'Calculando...' : 'Auto-Asignar AI' }}
+             </button>
+             <button class="btn-automation secondary" @click="mostrarModalClonar = true">
+               📋 Clonar de...
+             </button>
           </div>
         </div>
 
@@ -255,6 +261,8 @@ const mostrarModalHorario = ref(false)
 const asignacionActual = ref(null)
 const horarioEditando = ref(null)
 const cursoSeleccionadoParaAsignar = ref(null)
+const mostrarModalClonar = ref(false)
+const bloqueOrigenId = ref('')
 const profesorBusySlots = ref([]) // Horas ocupadas del profesor seleccionado en otros bloques
 const celdaDragOver = ref(null)
 const slotSiendoArrastrado = ref(null)
@@ -484,6 +492,43 @@ async function eliminarHorario(id) {
   if (confirm('¿Retirar esta sesión?')) { await api.delete(`/horarios/${id}`); cargarAsignaciones() }
 }
 
+async function autoAsignarBloqueActual() {
+  if (!bloqueSeleccionado.value) return
+  if (!confirm('La IA completará los espacios vacíos del bloque. ¿Deseas continuar?')) return
+  
+  try {
+    guardando.value = true
+    toast?.info('Iniciando IA', 'Calculando mejores horarios y docentes...')
+    const res = await api.post('/upload/bloques/asignar-automatico', {
+      bloquesIds: [bloqueSeleccionado.value]
+    })
+    
+    if (res.data.success) {
+      toast?.success('¡Proceso Completado!', res.data.message)
+      await cargarAsignaciones()
+    }
+  } catch (e) {
+    toast?.error('Error en Automatización', e.response?.data?.message || 'Error desconocido')
+  } finally {
+    guardando.value = false
+  }
+}
+
+async function clonarDeBloque() {
+  if (!bloqueOrigenId.value) return
+  try {
+    guardando.value = true
+    toast?.info('Clonando estructura...', 'Copiando asignaciones y horarios')
+    
+    // Simulación de clonación o implementación si existe endpoint
+    // Si no existe, podemos implementarlo o avisar
+    toast?.warning('Módulo en desarrollo', 'La clonación masiva estará disponible en la próxima actualización.')
+    mostrarModalClonar.value = false
+  } finally {
+    guardando.value = false
+  }
+}
+
 const professorsAndAulas = async () => {
   const [p, a] = await Promise.all([profesoresService.getAll(), aulasService.getAll()])
   profesores.value = p.data.data; aulas.value = a.data.data
@@ -543,7 +588,39 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 
 /* Calendar Workspace */
 .calendar-workspace { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
-.calendar-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.calendar-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.02); }
+.header-actions { display: flex; gap: 0.75rem; }
+
+.btn-automation {
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-automation.magic {
+  background: linear-gradient(135deg, var(--primary), #6366f1);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-automation.magic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+.btn-automation.secondary {
+  background: var(--bg-main);
+  color: var(--text-main);
+}
+
 .legend-premium { display: flex; gap: 1.5rem; font-size: 0.75rem; font-weight: 800; }
 .legend-premium .box { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 0.5rem; }
 .leg-item.teor .box { background: var(--primary); }
