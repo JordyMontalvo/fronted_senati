@@ -1,293 +1,196 @@
 <template>
-  <div class="cursos-view">
+  <div class="cursos-view fadeIn">
     <div class="page-header">
-      <div>
-        <h1>📚 Cursos Académicos</h1>
-        <p>Gestiona el catálogo de cursos por carrera y semestre</p>
+      <div class="header-content">
+        <h1 class="text-gradient">📚 Malla Curricular</h1>
+        <p>Catálogo nacional de programas y unidades académicas</p>
       </div>
-      <button class="btn btn-primary" @click="abrirModalNuevo">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+      <button class="btn btn-premium" @click="abrirModalNuevo">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+          <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Nuevo Curso
+        <span>Nuevo Curso</span>
       </button>
     </div>
 
-    <!-- Filtros -->
-    <div class="card filtros-card">
+    <!-- Filtros Inteligentes -->
+    <div class="glass-card filters-card">
       <div class="filtros-grid">
-        <select v-model="carreraFiltro" class="filtro-select">
-          <option value="">Todas las carreras</option>
-          <option v-for="carrera in carreras" :key="carrera._id" :value="carrera._id">
-            {{ carrera.codigo }} - {{ carrera.nombre }}
-          </option>
-        </select>
-        <select v-model="semestreFiltro" class="filtro-select">
-          <option value="">Todos los semestres</option>
-          <option v-for="sem in semestres" :key="sem" :value="sem">Semestre {{ sem }}</option>
-        </select>
-        <input 
-          v-model="busqueda" 
-          type="text" 
-          placeholder="Buscar curso..."
-          class="filtro-input"
-        >
-        <select v-model="porPagina" class="filtro-select">
-          <option :value="20">20 por página</option>
-          <option :value="50">50 por página</option>
-          <option :value="100">100 por página</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Estadísticas -->
-    <div class="stats-mini">
-      <div class="stat-mini-card">
-        <div class="stat-mini-value">{{ cursosFiltrados.length }}</div>
-        <div class="stat-mini-label">Cursos Encontrados</div>
-      </div>
-      <div class="stat-mini-card">
-        <div class="stat-mini-value">{{ creditosTotales }}</div>
-        <div class="stat-mini-label">Créditos Totales</div>
-      </div>
-      <div class="stat-mini-card">
-        <div class="stat-mini-value">{{ horasTotales }}</div>
-        <div class="stat-mini-label">Horas Totales</div>
-      </div>
-    </div>
-
-    <!-- Vista de Cursos -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Cargando cursos...</p>
-    </div>
-
-    <div v-else class="cursos-grid">
-      <div v-for="curso in cursosPaginados" :key="curso._id" class="curso-card">
-        <div class="curso-header">
-          <div class="curso-codigo-principal">
-            <span class="badge badge-primary">{{ curso.codigo }}</span>
-            <span :class="['tipo-badge', `tipo-${(curso.tipoCurso || 'tec').toLowerCase()}`]">
-              {{ curso.tipoCurso || 'TEC' }}
-            </span>
-          </div>
-          <div class="curso-acciones-mini">
-            <button class="btn-icon" @click="editarCurso(curso)" title="Editar">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-              </svg>
-            </button>
-            <button class="btn-icon btn-danger" @click="eliminarCurso(curso)" title="Eliminar">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9z" clip-rule="evenodd"/>
-              </svg>
-            </button>
-          </div>
+        <div class="select-group">
+          <select v-model="carreraFiltro" class="modern-select">
+            <option value="">Todas las Carreras</option>
+            <option v-for="carrera in carreras" :key="carrera._id" :value="carrera._id">
+              {{ carrera.codigo }} - {{ carrera.nombre }}
+            </option>
+          </select>
         </div>
-
-        <h3 class="curso-nombre">{{ curso.nombre }}</h3>
-
-        <div class="curso-detalles">
-          <div class="detalle-row">
-            <div class="detalle-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
-              </svg>
-              <span class="detalle-label">Carrera:</span>
-              <span class="detalle-valor">{{ curso.carrera?.codigo || 'N/A' }}</span>
-            </div>
-          </div>
-
-          <div class="detalle-row">
-            <div class="detalle-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-              </svg>
-              <span class="detalle-label">Horas:</span>
-              <span class="detalle-valor">{{ curso.horasTotal }}h</span>
-            </div>
-            <div class="detalle-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-              </svg>
-              <span class="detalle-label">Créditos:</span>
-              <span class="detalle-valor">{{ curso.creditos || 0 }}</span>
-            </div>
-          </div>
-
-          <div class="curso-horas-breakdown">
-            <div class="horas-item">
-              <div class="horas-barra teoria" :style="{ width: `${(curso.horasTeoria / curso.horasTotal * 100) || 0}%` }"></div>
-              <span>Teoría: {{ curso.horasTeoria }}h</span>
-            </div>
-            <div class="horas-item">
-              <div class="horas-barra taller" :style="{ width: `${(curso.horasTaller / curso.horasTotal * 100) || 0}%` }"></div>
-              <span>Taller: {{ curso.horasTaller }}h</span>
-            </div>
-            <div v-if="curso.horasVirtual > 0" class="horas-item">
-              <div class="horas-barra virtual" :style="{ width: `${(curso.horasVirtual / curso.horasTotal * 100) || 0}%` }"></div>
-              <span>Virtual: {{ curso.horasVirtual }}h</span>
-            </div>
-          </div>
+        <div class="select-group">
+          <select v-model="semestreFiltro" class="modern-select">
+            <option value="">Todos los Ciclos</option>
+            <option v-for="sem in semestres" :key="sem" :value="sem">{{ sem }}</option>
+          </select>
+        </div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            v-model="busqueda" 
+            type="text" 
+            placeholder="Buscar por nombre o código..."
+            class="search-input"
+          >
         </div>
       </div>
+    </div>
 
-      <p v-if="cursosFiltrados.length === 0" class="empty-state">
-        📭 No se encontraron cursos
-      </p>
+    <!-- Estadísticas Rápidas -->
+    <div class="stats-grid">
+      <div class="stat-glass-card">
+        <span class="stat-val">{{ cursosFiltrados.length }}</span>
+        <span class="stat-lab">Unidades Encontradas</span>
+      </div>
+      <div class="stat-glass-card">
+        <span class="stat-val">{{ creditosTotales }}</span>
+        <span class="stat-lab">Créditos Totales</span>
+      </div>
+      <div class="stat-glass-card">
+        <span class="stat-val">{{ horasTotales }}</span>
+        <span class="stat-lab">Horas Lectivas</span>
+      </div>
+    </div>
+
+    <!-- Listado de Cursos (Tabla Premium) -->
+    <div class="glass-card table-card">
+      <div v-if="loading" class="state-container">
+        <div class="spinner-modern"></div>
+        <p>Cargando unidades académicas...</p>
+      </div>
+
+      <div v-else class="modern-table-wrapper">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Identificador</th>
+              <th>Unidad Académica</th>
+              <th>Carrera & Ciclo</th>
+              <th>Horas / Créditos</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="curso in cursosPaginados" :key="curso._id">
+              <td>
+                <span class="code-badge">{{ curso.codigo }}</span>
+              </td>
+              <td class="course-main-cell">
+                <strong>{{ curso.nombre }}</strong>
+                <span class="course-meta">{{ curso.materia }} {{ curso.numero }}</span>
+              </td>
+              <td>
+                <div class="loc-cell">
+                  <span class="carrera-tag">{{ curso.carrera?.codigo || 'TEC' }}</span>
+                  <span class="sem-badge">Sem. {{ curso.semestre }}</span>
+                </div>
+              </td>
+              <td class="numeric-cell">
+                <div class="stats-pills">
+                  <span class="pill horas">{{ curso.horasTotal }}h</span>
+                  <span class="pill creditos">{{ curso.creditos }} CR</span>
+                </div>
+              </td>
+              <td class="text-right">
+                <div class="actions-flex">
+                  <button class="action-btn edit" @click="editarCurso(curso)">✏️</button>
+                  <button class="action-btn delete" @click="eliminarCurso(curso)">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div v-if="cursosFiltrados.length === 0" class="empty-state">
+           <div class="empty-icon">📂</div>
+           <p>No se encontraron cursos que coincidan con los filtros</p>
+        </div>
+      </div>
     </div>
 
     <!-- Paginación -->
-    <Pagination 
-      v-if="cursosFiltrados.length > 0"
-      :current-page="paginaActual"
-      :per-page="porPagina"
-      :total="cursosFiltrados.length"
-      @update:current-page="paginaActual = $event"
-    />
+    <div class="pagination-wrapper">
+      <Pagination 
+        v-if="cursosFiltrados.length > 0"
+        :current-page="paginaActual"
+        :per-page="porPagina"
+        :total="cursosFiltrados.length"
+        @update:current-page="paginaActual = $event"
+      />
+    </div>
 
-    <!-- Modal -->
+    <!-- Modal Extendido -->
     <Modal
       v-model="mostrarModal"
-      :titulo="cursoEditando ? 'Editar Curso' : 'Nuevo Curso'"
+      :titulo="cursoEditando ? 'Actualizar Unidad' : 'Nueva Unidad Académica'"
       size="large"
       :loading="guardando"
       @guardar="guardarCurso"
     >
       <form @submit.prevent="guardarCurso" class="form-modal">
-        <!-- Sección 1: Datos Principales -->
-        <div class="form-section">
-          <h3 class="section-title">📋 Datos Principales</h3>
-          <div class="form-row">
+        <div class="form-grid-layout">
+          <div class="form-column">
+            <h4 class="form-subtitle">Información Base</h4>
             <div class="form-group">
               <label>ID Único (CSV) *</label>
               <input v-model="formulario.codigo" type="text" class="form-input" required :disabled="!!cursoEditando">
             </div>
-            <div class="form-group">
-              <label>Materia (Siglas) *</label>
-              <input v-model="formulario.materia" type="text" class="form-input" required>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label>Nombre del Curso *</label>
-            <input v-model="formulario.nombre" type="text" class="form-input" required>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Carrera *</label>
-              <select v-model="formulario.carrera" class="form-input" required>
-                <option value="">Seleccionar carrera</option>
-                <option v-for="carrera in carreras" :key="carrera._id" :value="carrera._id">
-                  {{ carrera.codigo }} - {{ carrera.nombre }}
-                </option>
-              </select>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Materia (Siglas) *</label>
+                <input v-model="formulario.materia" type="text" class="form-input" placeholder="Ej: NAID" required>
+              </div>
+              <div class="form-group">
+                <label>Número *</label>
+                <input v-model="formulario.numero" type="text" class="form-input" placeholder="Ej: 178" required>
+              </div>
             </div>
             <div class="form-group">
-              <label>Semestre *</label>
-              <select v-model="formulario.semestre" class="form-input" required>
-                <option value="">Seleccionar</option>
-                <option v-for="sem in semestres" :key="sem" :value="sem">{{ sem }}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sección 2: Detalles Académicos -->
-        <div class="form-section">
-          <h3 class="section-title">🎓 Detalles Académicos</h3>
-          <div class="form-row three-col">
-            <div class="form-group">
-              <label>Código Curso</label>
-              <input v-model="formulario.numero" type="text" class="form-input" placeholder="Ej: 178">
-            </div>
-            <div class="form-group">
-              <label>Créditos</label>
-              <input v-model.number="formulario.creditos" type="number" step="0.5" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Semanas</label>
-              <input v-model.number="formulario.semanas" type="number" class="form-input">
+              <label>Nombre del Curso *</label>
+              <input v-model="formulario.nombre" type="text" class="form-input" required>
             </div>
           </div>
 
-          <div class="form-row three-col">
-            <div class="form-group">
-              <label>Horas Teoría</label>
-              <input v-model.number="formulario.horasTeoria" type="number" class="form-input" min="0">
+          <div class="form-column">
+            <h4 class="form-subtitle">Estructura Curricular</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Carrera *</label>
+                <select v-model="formulario.carrera" class="form-input" required>
+                  <option value="">Seleccionar...</option>
+                  <option v-for="carrera in carreras" :key="carrera._id" :value="carrera._id">
+                    {{ carrera.nombre }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Semestre *</label>
+                <input v-model="formulario.semestre" type="text" class="form-input" placeholder="Ej: I, II, 3..." required>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Horas Taller</label>
-              <input v-model.number="formulario.horasTaller" type="number" class="form-input" min="0">
+            <div class="form-row three-col">
+              <div class="form-group">
+                <label>Horas T.</label>
+                <input v-model.number="formulario.horasTeoria" type="number" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label>Horas P/T.</label>
+                <input v-model.number="formulario.horasTaller" type="number" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label>Créditos</label>
+                <input v-model.number="formulario.creditos" type="number" class="form-input" min="0" step="0.5">
+              </div>
             </div>
-            <div class="form-group">
-              <label>Horas Virtual</label>
-              <input v-model.number="formulario.horasVirtual" type="number" class="form-input" min="0">
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Evaluación Semestral</label>
-              <input v-model.number="formulario.evaluacion_semestral" type="number" class="form-input" min="0">
-            </div>
-          </div>
-          
-          <div class="form-info">
-            <div><strong>Semanal:</strong> {{ horasTotalesFormulario }}h</div>
-            <div><strong>Semestre (Calc):</strong> {{ horasTotalesFormulario * (formulario.semanas || 16) }}h</div>
-          </div>
-        </div>
-        
-        <!-- Sección 3: Clasificación y Estado -->
-        <div class="form-section">
-          <h3 class="section-title">🏷️ Clasificación y Estado</h3>
-          <div class="form-row three-col">
-            <div class="form-group">
-              <label>Tipo Específico</label>
-              <input v-model="formulario.tipo_especifico" class="form-input" placeholder="Ej: 0, 1, 4...">
-            </div>
-            <div class="form-group">
-              <label>Horario SINFO</label>
-              <input v-model="formulario.horario_sinfo" class="form-input" placeholder="Ej: TEC, TAL">
-            </div>
-            <div class="form-group">
-              <label>Clasif. Blackboard</label>
-              <input v-model="formulario.clasificacion_blackboard" class="form-input">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Status</label>
-              <input v-model="formulario.status" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Contenido Curricular</label>
-              <input v-model="formulario.contenido_curricular" class="form-input">
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label>Comentarios</label>
-            <textarea v-model="formulario.comentarios" class="form-input" rows="2"></textarea>
           </div>
         </div>
       </form>
-}, {
-"StartLine": 258,
-"EndLine": 270,
-"TargetContent": "const formulario = ref({\n  codigo: '',\n  nombre: '',\n  carrera: '',\n  semestre: '',\n  materia: '',\n  numero: 0,\n  tipoCurso: '',\n  creditos: 0,\n  horasTeoria: 0,\n  horasTaller: 0,\n  horasVirtual: 0\n})",
-"ReplacementContent": "const formulario = ref({\n  codigo: '',\n  nombre: '',\n  carrera: '',\n  semestre: '',\n  materia: '',\n  numero: '', \n  tipoCurso: '',\n  creditos: 0,\n  horasTeoria: 0,\n  horasTaller: 0,\n  horasVirtual: 0,\n  catalogo: '',\n  tipo_especifico: '',\n  identificacion: '',\n  horario_sinfo: '', \n  clasificacion_blackboard: '',\n  semanas: 16,\n  evaluacion_semestral: '',\n  horasSemestre: 0,\n  status: '',\n  comentarios: '',\n  contenido_curricular: ''\n})",
-"AllowMultiple": false
-}, {
-"StartLine": 670,
-"EndLine": 670,
-"TargetContent": "  .form-row {\n    grid-template-columns: 1fr;\n  }",
-"ReplacementContent": "  .form-row, .three-col {\n    grid-template-columns: 1fr;\n  }\n}\n\n.section-title {\n  font-size: 1rem;\n  font-weight: 700;\n  color: var(--primary);\n  margin-bottom: 1rem;\n  border-bottom: 2px solid #e5e7eb;\n  padding-bottom: 0.5rem;\n}\n\n.three-col {\n  display: grid;\n  grid-template-columns: 1fr 1fr 1fr;\n  gap: 1rem;\n}\n\n.form-section {\n  margin-bottom: 1.5rem;\n  background: #f9fafb;\n  padding: 1rem;\n  border-radius: 8px;\n}",
-"AllowMultiple": false
-
     </Modal>
   </div>
 </template>
@@ -312,453 +215,168 @@ const paginaActual = ref(1)
 const porPagina = ref(20)
 
 const formulario = ref({
-  codigo: '',
-  nombre: '',
-  carrera: '',
-  semestre: '',
-  materia: '',
-  numero: 0,
-  tipoCurso: '',
-  creditos: 0,
-  horasTeoria: 0,
-  horasTaller: 0,
-  horasVirtual: 0
+  codigo: '', nombre: '', carrera: '', semestre: '', materia: '',
+  numero: '', tipoCurso: '', creditos: 0, horasTeoria: 0, horasTaller: 0,
+  horasVirtual: 0, semanas: 16
 })
 
 const carreras = computed(() => store.carreras)
 const cursos = computed(() => store.cursos)
 
-// Helper para ordenar romanos
-const romanMap = {
-  'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 
-  'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10
-}
+const romanMap = { 'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6 }
 const romanToInt = (s) => romanMap[s] || 99
 
 const semestres = computed(() => {
   const sems = new Set()
-  cursos.value.forEach(c => {
-    if (c.semestre) sems.add(c.semestre)
-  })
+  cursos.value.forEach(c => { if (c.semestre) sems.add(c.semestre) })
   return Array.from(sems).sort((a, b) => romanToInt(a) - romanToInt(b))
 })
 
 const cursosFiltrados = computed(() => {
   let filtered = cursos.value
-
-  if (carreraFiltro.value) {
-    filtered = filtered.filter(c => c.carrera?._id === carreraFiltro.value)
-  }
-
-  if (semestreFiltro.value) {
-    filtered = filtered.filter(c => c.semestre === semestreFiltro.value)
-  }
-
+  if (carreraFiltro.value) filtered = filtered.filter(c => c.carrera?._id === carreraFiltro.value)
+  if (semestreFiltro.value) filtered = filtered.filter(c => c.semestre === semestreFiltro.value)
   if (busqueda.value) {
     const term = busqueda.value.toLowerCase()
-    filtered = filtered.filter(c =>
-      c.nombre.toLowerCase().includes(term) ||
+    filtered = filtered.filter(c => 
+      c.nombre.toLowerCase().includes(term) || 
       c.codigo.toLowerCase().includes(term)
     )
   }
-
   return filtered
 })
 
 const cursosPaginados = computed(() => {
-  const inicio = (paginaActual.value - 1) * porPagina.value
-  const fin = inicio + porPagina.value
-  return cursosFiltrados.value.slice(inicio, fin)
+  const skip = (paginaActual.value - 1) * porPagina.value
+  return cursosFiltrados.value.slice(skip, skip + porPagina.value)
 })
 
-const creditosTotales = computed(() => {
-  return cursosFiltrados.value.reduce((sum, c) => sum + (c.creditos || 0), 0)
-})
-
-const horasTotales = computed(() => {
-  return cursosFiltrados.value.reduce((sum, c) => sum + (c.horasTotal || 0), 0)
-})
-
-const horasTotalesFormulario = computed(() => {
-  return (formulario.value.horasTeoria || 0) + 
-         (formulario.value.horasTaller || 0) + 
-         (formulario.value.horasVirtual || 0) + 
-         (formulario.value.evaluacion_semestral || 0)
-})
-
-
+const creditosTotales = computed(() => cursosFiltrados.value.reduce((s, c) => s + (c.creditos || 0), 0))
+const horasTotales = computed(() => cursosFiltrados.value.reduce((s, c) => s + (c.horasTotal || 0), 0))
 
 function abrirModalNuevo() {
   cursoEditando.value = null
-  formulario.value = {
-    codigo: '',
-    nombre: '',
-    carrera: '',
-    semestre: '',
-    materia: '',
-    numero: '', 
-    tipoCurso: '',
-    creditos: 0,
-    horasTeoria: 0,
-    horasTaller: 0,
-    horasVirtual: 0,
-    catalogo: '',
-    tipo_especifico: '',
-    identificacion: '',
-    horario_sinfo: '', 
-    clasificacion_blackboard: '',
-    semanas: 16,
-    evaluacion_semestral: '',
-    horasSemestre: 0,
-    status: '',
-    comentarios: '',
-    contenido_curricular: ''
+  formulario.value = { 
+    codigo: '', nombre: '', carrera: '', semestre: '', materia: '',
+    numero: '', tipoCurso: 'TEC', creditos: 0, horasTeoria: 0, horasTaller: 0,
+    horasVirtual: 0, semanas: 16
   }
   mostrarModal.value = true
 }
 
 function editarCurso(curso) {
   cursoEditando.value = curso
-  formulario.value = {
-    codigo: curso.codigo,
-    nombre: curso.nombre,
-    carrera: curso.carrera?._id || '',
-    semestre: curso.semestre || '',
-    materia: curso.materia || '',
-    numero: curso.numero || '',
-    tipoCurso: curso.tipoCurso || '',
-    creditos: curso.creditos || 0,
-    horasTeoria: curso.horasTeoria || 0,
-    horasTaller: curso.horasTaller || 0,
-    horasVirtual: curso.horasVirtual || 0,
-    // Nuevos
-    catalogo: curso.catalogo || '',
-    tipo_especifico: curso.tipo_especifico || '',
-    identificacion: curso.identificacion || '',
-    horario_sinfo: curso.horario_sinfo || '',
-    clasificacion_blackboard: curso.clasificacion_blackboard || '',
-    semanas: curso.semanas || 0,
-    evaluacion_semestral: curso.evaluacion_semestral || '',
-    horasSemestre: curso.horasSemestre || 0,
-    status: curso.status || '',
-    comentarios: curso.comentarios || '',
-    contenido_curricular: curso.contenido_curricular || ''
-  }
+  formulario.value = { ...curso, carrera: curso.carrera?._id || '' }
   mostrarModal.value = true
 }
 
 async function guardarCurso() {
   try {
     guardando.value = true
-    
-    const data = {
-      ...formulario.value,
-      horasTotal: horasTotalesFormulario.value
-    }
-    
-    if (cursoEditando.value) {
-      await cursosService.update(cursoEditando.value._id, data)
-    } else {
-      await cursosService.create(data)
-    }
-    
+    const data = { ...formulario.value, horasTotal: (formulario.value.horasTeoria || 0) + (formulario.value.horasTaller || 0) }
+    if (cursoEditando.value) await cursosService.update(cursoEditando.value._id, data)
+    else await cursosService.create(data)
     await store.fetchCursos()
     mostrarModal.value = false
-  } catch (error) {
-    console.error('Error guardando curso:', error)
-    alert('Error al guardar el curso')
-  } finally {
-    guardando.value = false
-  }
+  } catch (err) { console.error(err) }
+  finally { guardando.value = false }
 }
 
 async function eliminarCurso(curso) {
-  if (!confirm(`¿Eliminar el curso "${curso.nombre}"?`)) return
-  
+  if (!confirm(`¿Eliminar "${curso.nombre}"?`)) return
   try {
     await cursosService.delete(curso._id)
     await store.fetchCursos()
-  } catch (error) {
-    console.error('Error eliminando curso:', error)
-    alert('Error al eliminar el curso')
-  }
+  } catch (err) { console.error(err) }
 }
 
 onMounted(async () => {
   loading.value = true
-  await Promise.all([
-    store.fetchCarreras(),
-    store.fetchCursos({ limit: 0 }) // Cargar todos los cursos sin paginación backend
-  ])
+  await Promise.all([store.fetchCarreras(), store.fetchCursos({ limit: 0 })])
   loading.value = false
 })
 </script>
 
 <style scoped>
-.cursos-view {
-  max-width: 1400px;
-  margin: 0 auto;
-}
+.cursos-view { max-width: 1600px; margin: 0 auto; }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
+.header-content h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+.header-content p { color: var(--text-muted); font-size: 1.1rem; }
 
-.page-header h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-}
-
-.page-header p {
-  color: var(--gray);
-}
-
-.filtros-card {
-  margin-bottom: 1.5rem;
-}
-
-.filtros-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 2fr 1fr;
-  gap: 1rem;
-}
-
-.filtro-select,
-.filtro-input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
-
-.stats-mini {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.stat-mini-card {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+.btn-premium {
+  background: linear-gradient(135deg, var(--accent), #FF8E53);
   color: white;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  text-align: center;
-}
-
-.stat-mini-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.stat-mini-label {
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.cursos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.curso-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
   transition: all 0.3s;
 }
 
-.curso-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+.btn-premium:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(242, 101, 34, 0.4); }
+
+/* Filters */
+.filters-card { padding: 1.5rem 2rem; margin-bottom: 2rem; }
+.filtros-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 1.5rem; }
+
+.search-box { position: relative; }
+.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5; }
+.search-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; }
+
+.modern-select { width: 100%; padding: 0.82rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 700; outline: none; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+.stat-glass-card { 
+  background: rgba(255, 255, 255, 0.03); 
+  backdrop-filter: blur(10px); 
+  padding: 1.5rem; 
+  border-radius: 1.5rem; 
+  border: 1px solid rgba(255,255,255,0.1); 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
 }
+.stat-val { font-size: 2rem; font-weight: 900; color: var(--accent); }
+.stat-lab { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
 
-.curso-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
+/* Table */
+.table-card { padding: 0; overflow: hidden; margin-bottom: 2rem; }
+.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table th { text-align: left; padding: 1.25rem 2rem; background: rgba(0,0,0,0.02); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; }
+.modern-table td { padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); }
+.modern-table tr:hover { background: rgba(255,255,255,0.02); }
 
-.curso-codigo-principal {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
+.code-badge { background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 0.4rem; font-weight: 800; font-family: monospace; }
+.course-main-cell { display: flex; flex-direction: column; }
+.course-main-cell strong { font-size: 1rem; }
+.course-meta { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; }
 
-.curso-acciones-mini {
-  display: flex;
-  gap: 0.5rem;
-}
+.loc-cell { display: flex; flex-direction: column; gap: 0.3rem; }
+.carrera-tag { font-weight: 800; color: var(--secondary); font-size: 0.85rem; }
+.sem-badge { font-size: 0.7rem; background: var(--bg-main); padding: 0.1rem 0.4rem; border-radius: 0.3rem; width: fit-content; font-weight: 700; }
 
-.tipo-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
+.stats-pills { display: flex; gap: 0.5rem; }
+.pill { padding: 0.2rem 0.6rem; border-radius: 0.4rem; font-size: 0.7rem; font-weight: 800; }
+.pill.horas { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.pill.creditos { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
 
-.tipo-tec {
-  background: #dbeafe;
-  color: #1e40af;
-}
+.actions-flex { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.action-btn { background: var(--bg-main); border: 1px solid var(--border); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.action-btn:hover { border-color: var(--accent); transform: scale(1.1); }
 
-.tipo-tal {
-  background: #d1fae5;
-  color: #065f46;
-}
+/* Modal Form */
+.form-grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+.form-subtitle { font-size: 0.9rem; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
-.tipo-vir {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.curso-nombre {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--dark);
-  line-height: 1.4;
-}
-
-.curso-detalles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.detalle-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.detalle-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.detalle-item svg {
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.detalle-label {
-  color: var(--gray);
-}
-
-.detalle-valor {
-  font-weight: 600;
-}
-
-.curso-horas-breakdown {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.horas-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-}
-
-.horas-barra {
-  height: 6px;
-  border-radius: 3px;
-  min-width: 20px;
-  transition: width 0.3s;
-}
-
-.horas-barra.teoria {
-  background: #3b82f6;
-}
-
-.horas-barra.taller {
-  background: #10b981;
-}
-
-.horas-barra.virtual {
-  background: #f59e0b;
-}
-
-.btn-danger {
-  color: var(--danger);
-}
-
-.btn-danger:hover {
-  background: #fee2e2;
-}
-
-.form-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--dark);
-}
-
-.form-input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.form-info {
-  padding: 1rem;
-  background: var(--light-gray);
-  border-radius: 0.5rem;
-  text-align: center;
-  font-size: 1.125rem;
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .cursos-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filtros-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 992px) {
+  .form-grid-layout { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .filtros-grid { grid-template-columns: 1fr; }
 }
 </style>
