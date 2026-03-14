@@ -6,11 +6,11 @@
         <p>Centro de mando y reportes estratégicos de horarios</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary" @click="exportarPDF" :disabled="loading || horariosFiltrados.length === 0">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <button class="btn btn-premium" @click="exportarPDF" :disabled="loading || horariosFiltrados.length === 0">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          Generar Reporte PDF
+          <span>Generar Reporte PDF</span>
         </button>
       </div>
     </div>
@@ -324,6 +324,32 @@ const exportarPDF = () => {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.btn-premium {
+  background: linear-gradient(135deg, var(--accent), #FF8E53);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(242, 101, 34, 0.3);
+}
+
+.btn-premium:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5);
+}
+
+.btn-premium:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
 }
 
 /* Filters Panel */

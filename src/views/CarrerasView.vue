@@ -5,11 +5,11 @@
         <h1 class="text-gradient">🎓 Carreras Profesionales</h1>
         <p>Administración del catálogo de programas académicos</p>
       </div>
-      <button class="btn btn-primary" @click="abrirModalNuevo">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-          <path d="M12 4v16m8-8H4" />
+      <button class="btn btn-premium" @click="abrirModalNuevo">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+          <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Nueva Carrera
+        <span>Nueva Carrera</span>
       </button>
     </div>
 
@@ -304,6 +304,26 @@ onMounted(async () => {
 
 .header-title h1 { font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem; }
 .header-title p { color: var(--text-muted); font-size: 1.1rem; }
+
+.btn-premium {
+  background: linear-gradient(135deg, var(--accent), #FF8E53);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(242, 101, 34, 0.3);
+}
+
+.btn-premium:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5);
+}
 
 /* Filters */
 .filters-card { padding: 1.5rem 2rem; margin-bottom: 2rem; }
