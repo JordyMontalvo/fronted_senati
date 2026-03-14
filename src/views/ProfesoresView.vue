@@ -116,38 +116,38 @@
         <div class="form-row">
           <div class="form-group">
             <label>Nombres *</label>
-            <input v-model="formulario.nombres" type="text" class="form-input" placeholder="Nombres del docente" required>
+            <input v-model="formulario.nombres" type="text" placeholder="Nombres del docente" required>
           </div>
           <div class="form-group">
             <label>Apellidos *</label>
-            <input v-model="formulario.apellidos" type="text" class="form-input" placeholder="Apellidos del docente" required>
+            <input v-model="formulario.apellidos" type="text" placeholder="Apellidos del docente" required>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Código de Empleado</label>
-            <input v-model="formulario.codigo" type="text" class="form-input" placeholder="Ej: P12345">
+            <input v-model="formulario.codigo" type="text" placeholder="Ej: P12345">
           </div>
           <div class="form-group">
             <label>DNI / Identificación</label>
-            <input v-model="formulario.dni" type="text" class="form-input" maxlength="8" placeholder="Documento de identidad">
+            <input v-model="formulario.dni" type="text" maxlength="8" placeholder="Documento de identidad">
           </div>
         </div>
 
         <div class="form-group">
           <label>Especialidad Académica</label>
-          <input v-model="formulario.especialidad" type="text" class="form-input" placeholder="Ej: Ingeniería de Software, Matemáticas...">
+          <input v-model="formulario.especialidad" type="text" placeholder="Ej: Ingeniería de Software, Matemáticas...">
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Correo Institucional</label>
-            <input v-model="formulario.email" type="email" class="form-input" placeholder="docente@senati.edu.pe">
+            <input v-model="formulario.email" type="email" placeholder="docente@senati.edu.pe">
           </div>
           <div class="form-group">
             <label>Teléfono de Contacto</label>
-            <input v-model="formulario.telefono" type="tel" class="form-input" placeholder="+51 ...">
+            <input v-model="formulario.telefono" type="tel" placeholder="+51 ...">
           </div>
         </div>
 
@@ -192,7 +192,6 @@ const formulario = ref({
 
 const profesoresFiltrados = computed(() => {
   let filtered = profesores.value
-
   if (busqueda.value) {
     const term = busqueda.value.toLowerCase()
     filtered = filtered.filter(p =>
@@ -202,18 +201,15 @@ const profesoresFiltrados = computed(() => {
       (p.especialidad && p.especialidad.toLowerCase().includes(term))
     )
   }
-
   if (estadoFiltro.value !== '') {
     filtered = filtered.filter(p => p.activo === (estadoFiltro.value === 'true'))
   }
-
   return filtered
 })
 
 const profesoresPaginados = computed(() => {
   const inicio = (paginaActual.value - 1) * porPagina.value
-  const fin = inicio + porPagina.value
-  return profesoresFiltrados.value.slice(inicio, fin)
+  return profesoresFiltrados.value.slice(inicio, inicio + porPagina.value)
 })
 
 function abrirModalNuevo() {
@@ -243,18 +239,12 @@ function editarProfesor(profesor) {
 async function guardarProfesor() {
   try {
     guardando.value = true
-    if (profesorEditando.value) {
-      await profesoresService.update(profesorEditando.value._id, formulario.value)
-    } else {
-      await profesoresService.create(formulario.value)
-    }
+    if (profesorEditando.value) await profesoresService.update(profesorEditando.value._id, formulario.value)
+    else await profesoresService.create(formulario.value)
     await cargarProfesores()
     mostrarModal.value = false
-  } catch (error) {
-    console.error('Error guardando profesor:', error)
-  } finally {
-    guardando.value = false
-  }
+  } catch (error) { console.error('Error:', error) }
+  finally { guardando.value = false }
 }
 
 async function eliminarProfesor(profesor) {
@@ -262,9 +252,7 @@ async function eliminarProfesor(profesor) {
   try {
     await profesoresService.delete(profesor._id)
     await cargarProfesores()
-  } catch (error) {
-    console.error('Error eliminando profesor:', error)
-  }
+  } catch (error) { console.error('Error:', error) }
 }
 
 async function cargarProfesores() {
@@ -272,31 +260,16 @@ async function cargarProfesores() {
     loading.value = true
     const response = await profesoresService.getAll()
     profesores.value = response.data.data
-  } catch (error) {
-    console.error('Error cargando profesores:', error)
-  } finally {
-    loading.value = false
-  }
+  } catch (error) { console.error('Error:', error) }
+  finally { loading.value = false }
 }
 
-onMounted(() => {
-  cargarProfesores()
-})
+onMounted(() => cargarProfesores())
 </script>
 
 <style scoped>
-.profesores-view {
-  max-width: 1600px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 2.5rem;
-}
-
+.profesores-view { max-width: 1600px; margin: 0 auto; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
 .header-content h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; }
 .header-content p { color: var(--text-muted); font-size: 1.1rem; }
 
@@ -311,33 +284,20 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s;
   box-shadow: 0 4px 15px rgba(242, 101, 34, 0.3);
 }
 
-.btn-premium:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5);
-}
+.btn-premium:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5); }
 
 /* Filters */
 .filters-card { padding: 1.5rem 2rem; margin-bottom: 2.5rem; }
 .filtros-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.5rem; }
-
 .search-box { position: relative; }
-.search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 1.1rem; }
-.search-input { width: 100%; padding: 0.8rem 1rem 0.8rem 3rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; transition: all 0.2s; }
-.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(242, 101, 34, 0.1); }
-
-.modern-select { width: 100%; padding: 0.82rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 700; outline: none; cursor: pointer; }
+.search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); opacity: 0.5; }
 
 /* Grid */
-.profesores-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
+.profesores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
 
 .profesor-glass-card {
   background: rgba(255, 255, 255, 0.03);
@@ -346,27 +306,17 @@ onMounted(() => {
   border-radius: 1.5rem;
   padding: 1.75rem;
   position: relative;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.4s;
 }
 
-.profesor-glass-card:hover {
-  transform: translateY(-10px);
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(242, 101, 34, 0.3);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+.profesor-glass-card:hover { 
+  transform: translateY(-10px); 
+  background: rgba(255, 255, 255, 0.07); 
+  border-color: rgba(242, 101, 34, 0.3); 
 }
 
-.card-inner {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.profesor-avatar-wrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-
+.card-inner { display: flex; gap: 1.5rem; align-items: center; }
+.profesor-avatar-wrapper { position: relative; flex-shrink: 0; }
 .profesor-avatar {
   width: 90px;
   height: 90px;
@@ -375,86 +325,22 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
-.avatar-initials {
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: white;
-  letter-spacing: -1px;
-}
-
-.status-dot {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 4px solid var(--bg-main);
-}
-
+.status-dot { position: absolute; bottom: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; border: 4px solid var(--bg-main); }
 .status-dot.active { background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
 .status-dot.inactive { background: #94a3b8; }
 
-.profesor-main-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
+.profesor-main-info { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
 .name-group h3 { font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.2rem; }
 .profesor-code { font-size: 0.7rem; font-weight: 800; background: rgba(0,0,0,0.2); padding: 0.1rem 0.6rem; border-radius: 0.4rem; color: var(--text-muted); text-transform: uppercase; width: fit-content; }
 
-.profesor-details-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+.detail-pill { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+.profesor-footer-actions { position: absolute; top: 1.25rem; right: 1.25rem; display: flex; gap: 0.5rem; opacity: 0; transition: all 0.3s; }
+.profesor-glass-card:hover .profesor-footer-actions { opacity: 1; }
 
-.detail-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.profesor-footer-actions {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  display: flex;
-  gap: 0.5rem;
-  opacity: 0;
-  transform: translateX(10px);
-  transition: all 0.3s;
-}
-
-.profesor-glass-card:hover .profesor-footer-actions {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-}
-
+.action-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
 .action-btn:hover { transform: scale(1.1); border-color: var(--accent); }
-.action-btn.delete:hover { border-color: #ef4444; }
 
 /* Premium Checkbox */
 .premium-checkbox { display: flex; align-items: center; gap: 1rem; cursor: pointer; font-weight: 700; user-select: none; }

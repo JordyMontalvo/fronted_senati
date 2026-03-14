@@ -15,7 +15,7 @@
 
     <!-- Filtros Inteligentes -->
     <div class="glass-card filters-card">
-      <div class="filters-grid">
+      <div class="filtros-grid">
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input 
@@ -34,8 +34,8 @@
         </div>
         <div class="select-group">
           <select v-model="porPagina" class="modern-select">
-            <option :value="20">20 registros</option>
-            <option :value="50">50 registros</option>
+            <option :value="24">24 por página</option>
+            <option :value="48">48 por página</option>
           </select>
         </div>
       </div>
@@ -80,10 +80,10 @@
                 </span>
               </td>
               <td class="actions-cell">
-                <button class="glass-btn edit" @click="editarCarrera(carrera)" title="Editar">
+                <button class="action-btn-circle edit" @click="editarCarrera(carrera)" title="Editar">
                   ✏️
                 </button>
-                <button class="glass-btn delete" @click="eliminarCarrera(carrera)" title="Eliminar">
+                <button class="action-btn-circle delete" @click="eliminarCarrera(carrera)" title="Eliminar">
                   🗑️
                 </button>
               </td>
@@ -120,22 +120,22 @@
         <div class="form-row">
           <div class="form-group">
             <label>Código Identificador</label>
-            <input v-model="formulario.codigo" type="text" class="form-input" placeholder="Ej: NAID" required>
+            <input v-model="formulario.codigo" type="text" placeholder="Ej: NAID" required>
           </div>
           <div class="form-group">
             <label>Catálogo</label>
-            <input v-model="formulario.catalogo" type="text" class="form-input" placeholder="2024">
+            <input v-model="formulario.catalogo" type="text" placeholder="2024">
           </div>
         </div>
 
         <div class="form-group">
           <label>Nombre del Programa</label>
-          <input v-model="formulario.nombre" type="text" class="form-input" placeholder="Ej: Administración Industrial" required>
+          <input v-model="formulario.nombre" type="text" placeholder="Ej: Administración Industrial" required>
         </div>
 
         <div class="form-group">
           <label>Escuela / Facultad</label>
-          <select v-model="formulario.escuela" class="form-input">
+          <select v-model="formulario.escuela">
             <option value="">Seleccionar escuela...</option>
             <option v-for="escuela in escuelas" :key="escuela._id" :value="escuela._id">
               {{ escuela.nombre }}
@@ -146,11 +146,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Nivel de Formación</label>
-            <input v-model="formulario.nivel" type="text" class="form-input" placeholder="Pregrado">
+            <input v-model="formulario.nivel" type="text" placeholder="Pregrado">
           </div>
           <div class="form-group">
             <label>Grado Académico</label>
-            <input v-model="formulario.grado" type="text" class="form-input" placeholder="Profesional">
+            <input v-model="formulario.grado" type="text" placeholder="Profesional">
           </div>
         </div>
 
@@ -184,16 +184,10 @@ const guardando = ref(false)
 const mostrarModal = ref(false)
 const carreraEditando = ref(null)
 const paginaActual = ref(1)
-const porPagina = ref(20)
+const porPagina = ref(24)
 
 const formulario = ref({
-  codigo: '',
-  nombre: '',
-  escuela: '',
-  nivel: '',
-  grado: '',
-  catalogo: '',
-  activo: true
+  codigo: '', nombre: '', escuela: '', nivel: '', grado: '', catalogo: '', activo: true
 })
 
 const carreras = computed(() => store.carreras)
@@ -216,8 +210,7 @@ const carrerasFiltradas = computed(() => {
 
 const carrerasPaginadas = computed(() => {
   const inicio = (paginaActual.value - 1) * porPagina.value
-  const fin = inicio + porPagina.value
-  return carrerasFiltradas.value.slice(inicio, fin)
+  return carrerasFiltradas.value.slice(inicio, inicio + porPagina.value)
 })
 
 function abrirModalNuevo() {
@@ -291,17 +284,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.carreras-view {
-  animation: fadeIn 0.6s ease-out;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 2.5rem;
-}
-
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
 .header-title h1 { font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem; }
 .header-title p { color: var(--text-muted); font-size: 1.1rem; }
 
@@ -316,34 +299,26 @@ onMounted(async () => {
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s;
   box-shadow: 0 4px 15px rgba(242, 101, 34, 0.3);
 }
 
-.btn-premium:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5);
-}
+.btn-premium:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5); }
 
 /* Filters */
 .filters-card { padding: 1.5rem 2rem; margin-bottom: 2rem; }
 .filters-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.5rem; }
-
 .search-box { position: relative; }
 .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5; }
-.search-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; }
-.search-input:focus { border-color: var(--accent); }
-
-.modern-select { width: 100%; padding: 0.8rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; }
 
 /* Table */
 .table-card { padding: 0; overflow: hidden; }
 .modern-table { width: 100%; border-collapse: collapse; }
-.modern-table th { text-align: left; padding: 1.25rem 2rem; background: rgba(0,0,0,0.02); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+.modern-table th { text-align: left; padding: 1.25rem 2rem; background: rgba(0,0,0,0.02); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; }
 .modern-table td { padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); }
 .modern-table tr:hover { background: rgba(255,255,255,0.02); }
 
-.code-badge { background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 0.4rem; font-size: 0.8rem; font-weight: 800; font-family: monospace; }
+.code-badge { background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 0.4rem; font-weight: 800; font-family: monospace; }
 .name-cell { display: flex; flex-direction: column; }
 .name-cell strong { font-size: 1rem; margin-bottom: 0.25rem; }
 .sub-text { font-size: 0.75rem; color: var(--text-muted); }
@@ -356,8 +331,8 @@ onMounted(async () => {
 .status-pill.inactive { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 
 .actions-cell { display: flex; gap: 0.75rem; justify-content: flex-end; }
-.glass-btn { background: var(--bg-main); border: 1px solid var(--border); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; filter: grayscale(1); }
-.glass-btn:hover { filter: grayscale(0); transform: scale(1.1); border-color: var(--accent); }
+.action-btn-circle { background: var(--bg-main); border: 1px solid var(--border); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.action-btn-circle:hover { border-color: var(--accent); transform: scale(1.1); }
 
 /* Checklist Premium */
 .form-footer-check { margin-top: 1rem; }
