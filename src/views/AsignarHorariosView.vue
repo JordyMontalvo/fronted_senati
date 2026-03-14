@@ -67,6 +67,24 @@
           </div>
         </div>
 
+        <!-- AI Suggestions Panel -->
+        <div v-if="cursoSeleccionadoParaAsignar" class="ai-suggestions-panel fadeIn">
+           <div class="panel-header">
+             <span class="ai-spark">✨</span>
+             <h4>Sugerencias de la IA</h4>
+           </div>
+           <p class="panel-desc">Espacios libres para **{{ getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id)?.profesor?.nombres }}**:</p>
+           
+           <div class="slots-list">
+              <div v-for="slot in sugerenciasIA" :key="slot.dia + slot.hora" class="suggestion-tag" @click="aplicarSugerenciaIA(slot)">
+                {{ slot.dia }} {{ slot.hora }} <span>+</span>
+              </div>
+              <div v-if="sugerenciasIA.length === 0" class="no-slots">
+                No se hallaron bloques contiguos libres
+              </div>
+           </div>
+        </div>
+
         <div class="sidebar-footer">
           <div class="total-progress">
             <label>Avance General del Bloque</label>
@@ -239,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import Modal from '../components/Modal.vue'
 import { bloquesService, periodosService, cursosService, profesoresService, aulasService } from '../services'
 import api from '../services/api'
@@ -344,6 +362,48 @@ function manejarClickCelda(dia, hora) {
     tipoSesion: 'Teoría'
   }
   mostrarModalHorario.value = true
+}
+
+const sugerenciasIA = computed(() => {
+  if (!cursoSeleccionadoParaAsignar.value) return []
+  const freeSlots = []
+  const currentBlockSchedules = assignments.value.flatMap(a => a.horarios || [])
+  
+  for (const dia of diasSemana) {
+    for (const hora of horasGrid) {
+      if (freeSlots.length >= 3) break
+      // No ocupado por el profesor en otros bloques Y no ocupado en este bloque actual
+      const busyProf = esHoraOcupadaProfesor(dia, hora)
+      const busyBlock = currentBlockSchedules.some(h => h.diaSemana === dia && h.horaInicio === hora)
+      
+      if (!busyProf && !busyBlock) {
+        freeSlots.push({ dia, hora })
+      }
+    }
+  }
+  return freeSlots
+})
+
+async function aplicarSugerenciaIA(slot) {
+  const asig = getAsignacionParaCurso(cursoSeleccionadoParaAsignar.value._id)
+  if (!asig) return
+  
+  try {
+    guardando.value = true
+    await api.post('/horarios', {
+      asignacion: asig._id,
+      diaSemana: slot.dia,
+      horaInicio: slot.hora,
+      horaFin: calcularSiguienteHora(slot.hora),
+      tipoSesion: 'Teoría'
+    })
+    toast?.success('Sugerencia aplicada', `${asig.curso.nombre} asignado a ${slot.dia} ${slot.hora}`)
+    await cargarAsignaciones()
+  } catch (e) {
+    toast?.error('Cruce detectado', 'Ese slot ya no está disponible.')
+  } finally {
+    guardando.value = false
+  }
 }
 
 async function seleccionarCursoParaPlanificar(curso) {
@@ -585,6 +645,41 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .total-progress label { font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.5rem; }
 .p-bar-total { height: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; overflow: hidden; margin-bottom: 0.5rem; }
 .p-fill-total { height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); }
+
+/* AI Suggestions */
+.ai-suggestions-panel {
+  margin: 1rem;
+  padding: 1rem;
+  background: rgba(242, 101, 34, 0.05);
+  border: 1px solid rgba(242, 101, 34, 0.2);
+  border-radius: 1rem;
+}
+
+.panel-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.ai-spark { font-size: 1.2rem; }
+.panel-header h4 { font-size: 0.85rem; font-weight: 800; color: var(--accent); margin: 0; }
+.panel-desc { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+.slots-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.suggestion-tag {
+  background: white;
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-tag:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(242, 101, 34, 0.1);
+}
+
+.no-slots { font-size: 0.7rem; font-style: italic; color: var(--text-muted); }
 
 /* Calendar Workspace */
 .calendar-workspace { display: flex; flex-direction: column; padding: 0; overflow: hidden; }

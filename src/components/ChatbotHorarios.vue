@@ -85,6 +85,7 @@
 
 <script setup>
 import { ref, onMounted, nextTick, inject } from 'vue'
+import api from '../services/api'
 
 const toast = inject('toast')
 const mensajes = ref([])
@@ -95,9 +96,9 @@ const mostrarSugerencias = ref(true)
 const messagesContainer = ref(null)
 
 const sugerencias = [
-  { emoji: '📋', texto: 'Ver Bloques', comando: 'listar bloques' },
-  { emoji: '👨‍🏫', texto: 'Docentes', comando: 'listar profesores' },
-  { emoji: '🕒', texto: 'Horarios', comando: 'buscar horario' },
+  { emoji: '📋', texto: '¿Quién enseña en NIID-301?', comando: 'quien enseña en el bloque NIID-301' },
+  { emoji: '👨‍🏫', texto: '¿Cuántos docentes hay?', comando: 'cuantos profesores hay' },
+  { emoji: '🕒', texto: '¿Cuántas clases hay?', comando: 'cuantas clases hay en total' },
 ]
 
 const toggleChat = () => {
@@ -124,12 +125,14 @@ const enviarMensaje = async () => {
   
   escribiendo.value = true
   try {
-    await new Promise(r => setTimeout(r, 800)) // Simulation
-    if (msg.toLowerCase().includes('hola')) {
-      agregarMensaje("¡Hola! Soy SIFY. ¿En qué puedo ayudarte con la programación académica hoy?")
+    const response = await api.post('/chatbot/ask', { message: msg })
+    if (response.data.success) {
+      agregarMensaje(response.data.response)
     } else {
-      agregarMensaje("Entendido. Estoy consultando la base de datos para darte una respuesta precisa...")
+      agregarMensaje("Lo siento, tuve un problema al consultar mis circuitos. Intenta de nuevo.")
     }
+  } catch (e) {
+    agregarMensaje("En este momento no puedo conectarme a la base de datos de SENATI.")
   } finally {
     escribiendo.value = false
   }
