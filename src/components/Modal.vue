@@ -49,7 +49,9 @@ function cerrar() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,26 +60,20 @@ function cerrar() {
 }
 
 .modal-container {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-.modal-container.small {
-  max-width: 400px;
-}
-
-.modal-container.medium {
-  max-width: 600px;
-}
-
-.modal-container.large {
-  max-width: 900px;
-}
+.modal-container.small { max-width: 400px; }
+.modal-container.medium { max-width: 600px; }
+.modal-container.large { max-width: 900px; }
 
 .modal-header {
   display: flex;
@@ -89,31 +85,32 @@ function cerrar() {
 
 .modal-header h2 {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--dark);
+  font-weight: 800;
+  color: var(--text-main);
 }
 
 .btn-cerrar {
-  background: transparent;
+  background: rgba(255,255,255,0.05);
   border: none;
   width: 40px;
   height: 40px;
-  border-radius: 0.5rem;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--gray);
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
 .btn-cerrar:hover {
-  background: var(--light-gray);
-  color: var(--dark);
+  background: var(--accent);
+  color: white;
+  transform: rotate(90deg);
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 2rem;
   overflow-y: auto;
   flex: 1;
 }
@@ -122,8 +119,9 @@ function cerrar() {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
   border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.02);
 }
 
 .modal-enter-active, .modal-leave-active {
