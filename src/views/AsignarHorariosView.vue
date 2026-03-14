@@ -41,7 +41,11 @@
         
         <div class="course-list">
           <div v-for="curso in cursosDisponibles" :key="curso._id" class="course-progress-card" 
-               :class="{ completed: isCursoCompletado(curso._id) }">
+               :class="{ 
+                 completed: isCursoCompletado(curso._id),
+                 active: cursoSeleccionadoParaAsignar?._id === curso._id
+               }"
+               @click="seleccionarCursoParaPlanificar(curso)">
             <div class="c-info">
               <div class="c-main">
                 <span class="c-code">{{ curso.codigo }}</span>
@@ -56,8 +60,8 @@
             </div>
             
             <div class="c-actions">
-              <button class="btn-add-session" @click="abrirAsignacionParaCurso(curso)">
-                {{ getAsignacionParaCurso(curso._id) ? 'Configurar Sesión' : '+ Asignar Docente' }}
+              <button class="btn-add-session" @click.stop="abrirAsignacionParaCurso(curso)">
+                {{ getAsignacionParaCurso(curso._id) ? 'Cambiar Especialista' : '+ Vincular Docente' }}
               </button>
             </div>
           </div>
@@ -97,10 +101,25 @@
             <template v-for="hora in horasGrid" :key="hora">
               <div class="time-label">{{ hora }}</div>
               <div v-for="dia in diasSemana" :key="dia" class="schedule-cell"
-                   @click="manejarClickCelda(dia, hora)">
+                   :class="{ 
+                     'is-busy': esHoraOcupadaProfesor(dia, hora),
+                     'drag-over': celdaDragOver === `${dia}-${hora}` 
+                   }"
+                   @click="manejarClickCelda(dia, hora)"
+                   @dragover.prevent="manejarDragOver(dia, hora)"
+                   @dragleave="celdaDragOver = null"
+                   @drop="manejarDrop(dia, hora)">
+                
+                <!-- Shading for Busy Professor -->
+                <div v-if="esHoraOcupadaProfesor(dia, hora)" class="busy-indicator">
+                  <span>Ocupado</span>
+                </div>
+
                 <div v-if="obtenerSesion(dia, hora)" 
                      class="slot-premium" 
                      :class="obtenerSesion(dia, hora).tipo"
+                     draggable="true"
+                     @dragstart="manejarDragStart(obtenerSesion(dia, hora).original)"
                      @click.stop="editarHorario(obtenerSesion(dia, hora).original)">
                   <div class="s-top">
                     <span class="s-course">{{ obtenerSesion(dia, hora).curso }}</span>
@@ -236,6 +255,9 @@ const mostrarModalHorario = ref(false)
 const asignacionActual = ref(null)
 const horarioEditando = ref(null)
 const cursoSeleccionadoParaAsignar = ref(null)
+const profesorBusySlots = ref([]) // Horas ocupadas del profesor seleccionado en otros bloques
+const celdaDragOver = ref(null)
+const slotSiendoArrastrado = ref(null)
 
 const formularioAsignacion = ref({ curso: '', profesor: '', aula: '', bloque: '' })
 const formularioHorario = ref({ asignacion: '', diaSemana: '', horaInicio: '', horaFin: '', tipoSesion: 'Teoría', aulaOverride: null })
@@ -296,10 +318,14 @@ function obtenerSesion(dia, hora) {
 }
 
 function manejarClickCelda(dia, hora) {
+  if (esHoraOcupadaProfesor(dia, hora)) {
+    return toast?.warning('Conflicto detectado', 'El profesor ya tiene clases en este horario en otro bloque.')
+  }
+  
   const cur = cursoSeleccionadoParaAsignar.value
   if (!cur) return toast?.info('Selecciona un curso de la izquierda primero')
   const asig = getAsignacionParaCurso(cur._id)
-  if (!asig) return toast?.info('Primero asigna un docente al curso')
+  if (!asig) return toast?.info('Primero vincula un docente al curso')
   
   horarioEditando.value = null
   formularioHorario.value = {
@@ -310,6 +336,82 @@ function manejarClickCelda(dia, hora) {
     tipoSesion: 'Teoría'
   }
   mostrarModalHorario.value = true
+}
+
+async function seleccionarCursoParaPlanificar(curso) {
+  cursoSeleccionadoParaAsignar.value = curso
+  const asig = getAsignacionParaCurso(curso._id)
+  if (asig && asig.profesor) {
+    await cargarDisponibilidadProfesor(asig.profesor._id)
+  } else {
+    profesorBusySlots.value = []
+  }
+}
+
+async function cargarDisponibilidadProfesor(profId) {
+  try {
+    const res = await api.get(`/horarios?profesor=${profId}`)
+    // Filtrar para obtener solo horarios que NO pertenezcan al bloque actual
+    profesorBusySlots.value = res.data.data.filter(h => h.asignacion?.bloque !== bloqueSeleccionado.value)
+  } catch (e) {
+    console.error('Error cargando disponibilidad del profesor:', e)
+  }
+}
+
+function esHoraOcupadaProfesor(dia, hora) {
+  return profesorBusySlots.value.some(h => h.diaSemana === dia && h.horaInicio === hora)
+}
+
+// DRAG & DROP LOGIC
+function manejarDragStart(slot) {
+  slotSiendoArrastrado.value = slot
+}
+
+function manejarDragOver(dia, hora) {
+  celdaDragOver.value = `${dia}-${hora}`
+}
+
+async function manejarDrop(dia, hora) {
+  const slot = slotSiendoArrastrado.value
+  celdaDragOver.value = null
+  if (!slot) return
+
+  if (esHoraOcupadaProfesor(dia, hora)) {
+    return toast?.error('Conflicto', 'El docente tiene otra clase en ese horario.')
+  }
+
+  try {
+    guardando.value = true
+    const duration = calcularDuracion(slot.horaInicio, slot.horaFin)
+    const nuevaHoraFin = sumarMinutos(hora, duration)
+    
+    await api.put(`/horarios/${slot._id}`, {
+      ...slot,
+      diaSemana: dia,
+      horaInicio: hora,
+      horaFin: nuevaHoraFin
+    })
+    
+    toast?.success('Horario actualizado', `Clase movida a ${dia} ${hora}`)
+    await cargarAsignaciones()
+  } catch (e) {
+    toast?.error('Error al mover', e.response?.data?.message || 'Cruce detectado')
+  } finally {
+    guardando.value = false
+    slotSiendoArrastrado.value = null
+  }
+}
+
+function calcularDuracion(inicio, fin) {
+  const [h1, m1] = inicio.split(':').map(Number)
+  const [h2, m2] = fin.split(':').map(Number)
+  return (h2 * 60 + m2) - (h1 * 60 + m1)
+}
+
+function sumarMinutos(hora, minutos) {
+  const [h, m] = hora.split(':').map(Number)
+  const dt = new Date(0, 0, 0, h, m + minutos)
+  return `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
 }
 
 function calcularSiguienteHora(hora) {
@@ -454,11 +556,30 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .grid-time-label, .grid-day-header { background: var(--bg-main); padding: 1rem 0.5rem; text-align: center; font-size: 0.75rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; }
 
 .time-label { background: var(--bg-main); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; }
-
-.schedule-cell { background: var(--bg-card); min-height: 85px; padding: 0.25rem; transition: background 0.2s; cursor: cell; }
+.schedule-cell { background: var(--bg-card); min-height: 85px; padding: 0.25rem; transition: background 0.2s; cursor: cell; position: relative; }
 .schedule-cell:hover { background: rgba(242, 101, 34, 0.05); }
+.schedule-cell.is-busy { background: rgba(0, 0, 0, 0.1); cursor: not-allowed; }
+.schedule-cell.drag-over { background: var(--accent-glow); border: 2px dashed var(--accent); }
 
-.slot-premium { height: 100%; border-radius: 0.75rem; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.3rem; color: white; animation: slideIn 0.3s ease-out; }
+.busy-indicator {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: grayscale(1);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.slot-premium { height: 100%; border-radius: 0.75rem; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.3rem; color: white; animation: slideIn 0.3s ease-out; position: relative; z-index: 2; transition: transform 0.2s, box-shadow 0.2s; }
+.slot-premium:hover { transform: scale(1.02); cursor: grab; }
+.slot-premium:active { cursor: grabbing; }
+
 @keyframes slideIn { from { opacity: 0; transform: scale(0.9); } }
 
 .slot-premium.teor { background: linear-gradient(135deg, var(--primary), var(--secondary)); box-shadow: 0 4px 12px rgba(0, 66, 139, 0.3); }
