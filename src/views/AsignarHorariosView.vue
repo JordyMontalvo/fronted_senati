@@ -291,10 +291,16 @@ const bloquesFiltrados = computed(() => {
 
 const cursosDisponibles = computed(() => {
   if (!bloqueActual.value) return []
-  return cursos.value.filter(c => 
-    c.carrera?._id === bloqueActual.value.carrera?._id &&
-    c.semestre === bloqueActual.value.semestreAcademico
-  )
+  
+  const bloqueCarreraId = String(bloqueActual.value.carrera?._id || bloqueActual.value.carrera || '');
+  const bloqueSemestre = String(bloqueActual.value.semestreAcademico || '').trim().toUpperCase();
+
+  return cursos.value.filter(c => {
+    const cursoCarreraId = String(c.carrera?._id || c.carrera || '');
+    const cursoSemestre = String(c.semestre || '').trim().toUpperCase();
+    
+    return cursoCarreraId === bloqueCarreraId && cursoSemestre === bloqueSemestre;
+  });
 })
 
 const horasUnicas = computed(() => {
@@ -350,6 +356,20 @@ async function cargarInfoBloque() {
   try {
     const response = await bloquesService.getById(bloqueSeleccionado.value)
     bloqueActual.value = response.data.data
+    
+    // Cargar específicamente los cursos de esta carrera y semestre para evitar problemas de paginación/límites
+    if (bloqueActual.value) {
+      const carreraId = bloqueActual.value.carrera?._id || bloqueActual.value.carrera;
+      const semestre = bloqueActual.value.semestreAcademico;
+      
+      const cursosRes = await cursosService.getAll({ 
+        carrera: carreraId, 
+        semestre: semestre,
+        limit: 500 // Suficiente para un semestre
+      });
+      cursos.value = cursosRes.data.data;
+    }
+    
     await cargarAsignaciones()
   } catch (error) {
     console.error('Error:', error)
@@ -485,14 +505,12 @@ async function eliminarHorario(id) {
 
 async function cargarDatos() {
   try {
-    const [profesoresRes, aulasRes, cursosRes] = await Promise.all([
+    const [profesoresRes, aulasRes] = await Promise.all([
       profesoresService.getAll(),
-      aulasService.getAll(),
-      cursosService.getAll()
+      aulasService.getAll()
     ])
     profesores.value = profesoresRes.data.data
     aulas.value = aulasRes.data.data
-    cursos.value = cursosRes.data.data
   } catch (error) {
     console.error('Error:', error)
   }

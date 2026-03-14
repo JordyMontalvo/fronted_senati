@@ -279,9 +279,8 @@ async function eliminarCarrera(carrera) {
 
 async function cargarEscuelas() {
   try {
-    const response = await fetch('http://localhost:3000/api/escuelas')
-    const data = await response.json()
-    escuelas.value = data.data
+    const response = await api.get('/escuelas')
+    escuelas.value = response.data.data
   } catch (error) {
     console.error('Error cargando escuelas:', error)
   }
