@@ -1,49 +1,28 @@
 <template>
-  <div class="asignar-horarios-view">
-    <div class="page-intro">
-      <div class="stepper">
-        <div class="step" :class="{ 'active': !bloqueActual, 'completed': bloqueActual }">
-          <div class="step-num">1</div>
-          <div class="step-label">Seleccionar Bloque</div>
-        </div>
-        <div class="step-line"></div>
-        <div class="step" :class="{ 'active': bloqueActual && asignaciones.length === 0, 'completed': asignaciones.length > 0 }">
-          <div class="step-num">2</div>
-          <div class="step-label">Asignar Cursos</div>
-        </div>
-        <div class="step-line"></div>
-        <div class="step" :class="{ 'active': asignaciones.length > 0 }">
-          <div class="step-num">3</div>
-          <div class="step-label">Vista Previa</div>
-        </div>
+  <div class="asignar-horarios-view fadeIn">
+    <!-- Stepper & Block Selection -->
+    <div class="header-section">
+      <div class="stepper-minimal">
+        <div class="s-step" :class="{ active: !bloqueActual }">1. Bloque</div>
+        <div class="s-arrow">→</div>
+        <div class="s-step" :class="{ active: bloqueActual }">2. Programación</div>
       </div>
-    </div>
 
-    <!-- PASO 1: Seleccionar Bloque -->
-    <div class="glass-card selector-card" :class="{ 'minimized': bloqueActual }">
-      <div class="card-header">
-        <div class="header-icon">📍</div>
-        <h2>Selección de Bloque Académico</h2>
-      </div>
-      <div class="selector-grid">
-        <div class="form-group">
-          <label>Período Académico</label>
-          <div class="input-wrapper">
-            <select v-model="periodoSeleccionado" @change="cargarBloquesPorPeriodo" class="custom-select">
-              <option value="">Seleccionar período...</option>
-              <option v-for="periodo in periodos" :key="periodo._id" :value="periodo._id">
-                {{ periodo.codigo }} - {{ periodo.nombre }}
-              </option>
+      <div class="glass-card selector-bar">
+        <div class="selectors">
+          <div class="sel-group">
+            <label>Período</label>
+            <select v-model="periodoSeleccionado" @change="cargarBloquesPorPeriodo">
+              <option value="">Seleccionar...</option>
+              <option v-for="p in periodos" :key="p._id" :value="p._id">{{ p.codigo }}</option>
             </select>
           </div>
-        </div>
-        <div class="form-group">
-          <label>Bloque / NRC</label>
-          <div class="input-wrapper">
-            <select v-model="bloqueSeleccionado" @change="cargarInfoBloque" class="custom-select">
-              <option value="">Seleccionar bloque...</option>
-              <option v-for="bloque in bloquesFiltrados" :key="bloque._id" :value="bloque._id">
-                {{ bloque.codigo }} - {{ bloque.carrera?.nombre }} (Sem. {{ bloque.semestreAcademico }})
+          <div class="sel-group main">
+            <label>Bloque Académico (NRC)</label>
+            <select v-model="bloqueSeleccionado" @change="cargarInfoBloque">
+              <option value="">Seleccionar bloque objetivo...</option>
+              <option v-for="b in bloquesFiltrados" :key="b._id" :value="b._id">
+                {{ b.codigo }} - {{ b.carrera?.nombre }} (Sem. {{ b.semestreAcademico }})
               </option>
             </select>
           </div>
@@ -51,210 +30,183 @@
       </div>
     </div>
 
-    <!-- Información del Bloque Seleccionado (Floating Pill Style) -->
-    <div v-if="bloqueActual" class="bloque-summary-pill fadeIn">
-      <div class="pill-info">
-        <span class="pill-code">{{ bloqueActual.codigo }}</span>
-        <span class="pill-divider"></span>
-        <span class="pill-carrera">{{ bloqueActual.carrera?.nombre }}</span>
-        <span class="pill-semestre">Semestre {{ bloqueActual.semestreAcademico }}</span>
-      </div>
-      <div class="pill-stats">
-        <div class="mini-stat">
-          <span class="label">Capacidad</span>
-          <span class="value">{{ bloqueActual.totalInscritos || 0 }}/{{ bloqueActual.capacidadMax }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- PASO 2: Asignar Cursos al Bloque -->
-    <div v-if="bloqueActual" class="main-content-grid">
-      <div class="glass-card assignment-card fadeIn">
-        <div class="section-header">
-          <h2>📚 Cursos del Semestre</h2>
-          <button class="btn btn-premium" @click="mostrarModalAsignacion = true">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Asignar Nuevo</span>
-          </button>
-        </div>
-
-        <div v-if="asignaciones.length === 0" class="empty-state-container">
-          <div class="empty-icon">📂</div>
-          <p>No hay cursos asignados. Comienza agregando el primer curso de la malla.</p>
-        </div>
-
-        <div v-else class="asignaciones-grid">
-          <div v-for="asignacion in asignaciones" :key="asignacion._id" class="asignacion-glass-item">
-            <div class="item-header">
-              <div class="curso-title-group">
-                <h3>{{ asignacion.curso?.nombre }}</h3>
-                <div class="badges">
-                  <span class="badge badge-code">{{ asignacion.curso?.codigo }}</span>
-                  <span class="badge badge-credits">{{ asignacion.curso?.creditos }} Cred.</span>
-                </div>
-              </div>
-              <div class="item-actions">
-                <button class="icon-btn edit" @click="editarAsignacion(asignacion)" title="Editar">
-                  ✏️
-                </button>
-                <button class="icon-btn delete" @click="eliminarAsignacion(asignacion._id)" title="Eliminar">
-                  🗑️
-                </button>
-              </div>
-            </div>
-
-            <div class="item-details">
-              <div class="detail">
-                <span class="detail-label">Profesor</span>
-                <span class="detail-val">{{ asignacion.profesor?.nombres }} {{ asignacion.profesor?.apellidos }}</span>
-              </div>
-              <div class="detail">
-                <span class="detail-label">Aula</span>
-                <span class="detail-val">{{ asignacion.aula?.nombre || 'Pendiente' }}</span>
-              </div>
-              <div class="detail">
-                <span class="detail-label">Horas</span>
-                <span class="detail-val">{{ asignacion.curso?.horasTotal }}h</span>
-              </div>
-            </div>
-
-            <div class="item-horarios">
-              <div class="horarios-top">
-                <h4>Horarios Registrados</h4>
-                <button class="text-btn" @click="agregarHorario(asignacion)">+ Agregar</button>
-              </div>
-              <div v-if="asignacion.horarios && asignacion.horarios.length > 0" class="horario-pills">
-                <div 
-                  v-for="horario in asignacion.horarios" 
-                  :key="horario._id" 
-                  class="horario-pill"
-                  @click="editarHorario(horario)"
-                >
-                  <span class="day">{{ horario.diaSemana.substring(0,2) }}</span>
-                  <span class="time">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
-                  <button class="pill-close" @click.stop="eliminarHorario(horario._id)">×</button>
-                </div>
-              </div>
-              <div v-else class="no-horarios-msg">Sin horarios definidos</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PASO 3: Vista Previa Real-Time -->
-      <div v-if="asignaciones.length > 0" class="glass-card preview-card fadeIn">
-        <div class="card-header">
-          <h2>🕒 Vista Previa Semanal</h2>
-          <div class="legend">
-            <span class="dot t"></span> Teoría
-            <span class="dot p"></span> Práctica
-            <span class="dot l"></span> Lab
-          </div>
+    <!-- MAIN WORKSPACE -->
+    <div v-if="bloqueActual" class="workspace-master fadeIn">
+      <!-- SIDEBAR: Academic Progress -->
+      <aside class="academic-sidebar glass-card">
+        <div class="sidebar-header">
+          <h3>Malla Académica</h3>
+          <span class="block-badge">{{ bloqueActual.codigo }}</span>
         </div>
         
-        <div class="calendar-container">
-          <div class="calendar-grid">
-            <div class="grid-header">
-              <div class="time-col">Hora</div>
-              <div v-for="dia in diasSemana" :key="dia" class="day-col">{{ dia }}</div>
+        <div class="course-list">
+          <div v-for="curso in cursosDisponibles" :key="curso._id" class="course-progress-card" 
+               :class="{ completed: isCursoCompletado(curso._id) }">
+            <div class="c-info">
+              <div class="c-main">
+                <span class="c-code">{{ curso.codigo }}</span>
+                <span class="c-name">{{ curso.nombre }}</span>
+              </div>
+              <div class="c-stats">
+                <span class="progress-txt">{{ getHorasAsignadas(curso._id) }}/{{ curso.horasTotal }}h</span>
+              </div>
             </div>
-            <div class="grid-body">
-              <div v-for="hora in horasUnicas" :key="hora" class="grid-row">
-                <div class="time-cell">{{ hora }}</div>
-                <div v-for="dia in diasSemana" :key="dia" class="content-cell">
-                  <div v-if="obtenerSesion(dia, hora)" :class="['slot-box', `type-${obtenerSesion(dia, hora).tipo}`]">
-                    <div class="slot-curso">{{ obtenerSesion(dia, hora).curso }}</div>
-                    <div class="slot-meta">{{ obtenerSesion(dia, hora).aula }}</div>
-                    <div class="slot-prof">{{ obtenerSesion(dia, hora).profesor.split(' ')[0] }}</div>
+            <div class="c-progress-bar">
+              <div class="c-fill" :style="{ width: `${(getHorasAsignadas(curso._id) / curso.horasTotal) * 100}%` }"></div>
+            </div>
+            
+            <div class="c-actions">
+              <button class="btn-add-session" @click="abrirAsignacionParaCurso(curso)">
+                {{ getAsignacionParaCurso(curso._id) ? 'Configurar Sesión' : '+ Asignar Docente' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="total-progress">
+            <label>Avance General del Bloque</label>
+            <div class="p-bar-total">
+              <div class="p-fill-total" :style="{ width: `${progresoGeneral}%` }"></div>
+            </div>
+            <span>{{ progresoGeneral }}% Completado</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN AREA: Master Calendar -->
+      <main class="calendar-workspace glass-card">
+        <div class="calendar-header">
+          <div class="legend-premium">
+            <div class="leg-item teor"><span class="box"></span> Teoría</div>
+            <div class="leg-item tall"><span class="box"></span> Taller</div>
+            <div class="leg-item labo"><span class="box"></span> Laboratorio</div>
+          </div>
+          <div class="header-actions">
+             <button class="btn-refresh" @click="cargarAsignaciones">🔄 Sincronizar</button>
+          </div>
+        </div>
+
+        <div class="calendar-overflow">
+          <div class="calendar-grid-premium">
+            <!-- Header Dias -->
+            <div class="grid-time-label">Horas</div>
+            <div v-for="dia in diasSemana" :key="dia" class="grid-day-header">{{ dia }}</div>
+
+            <!-- Grid Content -->
+            <template v-for="hora in horasGrid" :key="hora">
+              <div class="time-label">{{ hora }}</div>
+              <div v-for="dia in diasSemana" :key="dia" class="schedule-cell"
+                   @click="manejarClickCelda(dia, hora)">
+                <div v-if="obtenerSesion(dia, hora)" 
+                     class="slot-premium" 
+                     :class="obtenerSesion(dia, hora).tipo"
+                     @click.stop="editarHorario(obtenerSesion(dia, hora).original)">
+                  <div class="s-top">
+                    <span class="s-course">{{ obtenerSesion(dia, hora).curso }}</span>
+                    <button class="s-del" @click.stop="eliminarHorario(obtenerSesion(dia, hora).original._id)">×</button>
+                  </div>
+                  <div class="s-mid">
+                    <span class="s-prof">{{ obtenerSesion(dia, hora).profesor }}</span>
+                  </div>
+                  <div class="s-bot">
+                     <span class="s-room">📍 {{ obtenerSesion(dia, hora).aula }}</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
+      </main>
+    </div>
+
+    <!-- Fallback -->
+    <div v-else class="empty-workspace fadeIn">
+      <div class="empty-content">
+        <div class="empty-art">🗓️</div>
+        <h2>Entorno de Programación</h2>
+        <p>Selecciona un período y bloque para comenzar la orquestación de horarios.</p>
       </div>
     </div>
 
-    <!-- Modal: Asignar Curso al Bloque -->
+    <!-- Modales Rediseñados -->
     <Modal
       v-model="mostrarModalAsignacion"
-      :titulo="asignacionActual ? 'Editar Asignación' : 'Asignar Curso'"
-      size="large"
+      :titulo="asignacionActual ? 'Configurar Docente' : 'Vincular Docente a Curso'"
+      size="medium"
       :loading="guardando"
       @guardar="guardarAsignacion"
     >
       <form @submit.prevent="guardarAsignacion" class="form-modal">
+        <div class="selected-course-info">
+          <span class="label">Curso Seleccionado:</span>
+          <strong>{{ cursoSeleccionadoParaAsignar?.nombre }}</strong>
+        </div>
+        
         <div class="form-group">
-          <label>Curso *</label>
-          <select v-model="formularioAsignacion.curso" class="form-input" required>
-            <option value="">Seleccionar curso</option>
-            <option v-for="curso in cursosDisponibles" :key="curso._id" :value="curso._id">
-              {{ curso.codigo }} - {{ curso.nombre }} ({{ curso.horasTotal }}h)
+          <label>Catedrático Especialista *</label>
+          <select v-model="formularioAsignacion.profesor" class="form-input" required>
+            <option value="">Seleccionar profesor...</option>
+            <option v-for="p in profesores" :key="p._id" :value="p._id">
+              {{ p.nombres }} {{ p.apellidos }} ({{ p.especialidad || 'General' }})
             </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Aula Predeterminada</label>
+          <select v-model="formularioAsignacion.aula" class="form-input">
+            <option value="">Asignar después...</option>
+            <option v-for="a in aulas" :key="a._id" :value="a._id">
+              {{ a.codigo }} - {{ a.nombre }} [{{ a.tipo }}]
+            </option>
+          </select>
+        </div>
+      </form>
+    </Modal>
+
+    <Modal
+      v-model="mostrarModalHorario"
+      :titulo="horarioEditando ? 'Reajustar Bloque Horario' : 'Definir Nueva Sesión'"
+      :loading="guardando"
+      @guardar="guardarHorario"
+    >
+      <form @submit.prevent="guardarHorario" class="form-modal">
+        <div class="horario-context">
+          <div class="context-item">
+             <span class="l">Día</span>
+             <span class="v">{{ formularioHorario.diaSemana }}</span>
+          </div>
+          <div class="context-item">
+             <span class="l">Inicio</span>
+             <span class="v">{{ formularioHorario.horaInicio }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Sesion / Entorno</label>
+          <select v-model="formularioHorario.tipoSesion" class="form-input" required>
+            <option value="Teoría">Teoría (Aula Común)</option>
+            <option value="Taller">Taller (Equipamiento)</option>
+            <option value="Laboratorio">Laboratorio (Dual/Cómputo)</option>
           </select>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Profesor *</label>
-            <select v-model="formularioAsignacion.profesor" class="form-input" required>
-              <option value="">Seleccionar profesor</option>
-              <option v-for="profesor in profesores" :key="profesor._id" :value="profesor._id">
-                {{ profesor.nombres }} {{ profesor.apellidos }}
-              </option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Aula</label>
-            <select v-model="formularioAsignacion.aula" class="form-input">
-              <option value="">Seleccionar aula</option>
-              <option v-for="aula in aulas" :key="aula._id" :value="aula._id">
-                {{ aula.codigo }} - {{ aula.nombre }} ({{ aula.tipo }}, Cap: {{ aula.capacidad }})
-              </option>
-            </select>
-          </div>
-        </div>
-      </form>
-    </Modal>
-
-    <!-- Modal: Agregar/Editar Horario -->
-    <Modal
-      v-model="mostrarModalHorario"
-      :titulo="horarioEditando ? 'Editar Horario' : 'Agregar Horario'"
-      :loading="guardando"
-      @guardar="guardarHorario"
-    >
-      <form @submit.prevent="guardarHorario" class="form-modal">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Día de la Semana *</label>
-            <select v-model="formularioHorario.diaSemana" class="form-input" required>
-              <option value="">Seleccionar</option>
-              <option v-for="dia in diasSemana" :key="dia" :value="dia">{{ dia }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Tipo de Sesión *</label>
-            <select v-model="formularioHorario.tipoSesion" class="form-input" required>
-              <option value="">Seleccionar</option>
-              <option value="Teoría">Teoría</option>
-              <option value="Taller">Taller</option>
-              <option value="Laboratorio">Laboratorio</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Hora Inicio *</label>
-            <input v-model="formularioHorario.horaInicio" type="time" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label>Hora Fin *</label>
+            <label>Hora de Término *</label>
             <input v-model="formularioHorario.horaFin" type="time" class="form-input" required>
           </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Cambiar Aula para esta sesión</label>
+          <select v-model="formularioHorario.aulaOverride" class="form-input">
+            <option :value="null">Usar aula predeterminada</option>
+            <option v-for="a in aulas" :key="a._id" :value="a._id">
+              {{ a.codigo }} - {{ a.nombre }} ({{ a.tipo }})
+            </option>
+          </select>
         </div>
       </form>
     </Modal>
@@ -281,543 +233,249 @@ const guardando = ref(false)
 
 const mostrarModalAsignacion = ref(false)
 const mostrarModalHorario = ref(false)
-const asignacionActual = ref(null) // Para saber a qué asignación agregar horario
-const horarioEditando = ref(null) // Para saber si estamos editando un horario
+const asignacionActual = ref(null)
+const horarioEditando = ref(null)
+const cursoSeleccionadoParaAsignar = ref(null)
 
-const formularioAsignacion = ref({
-  curso: '',
-  profesor: '',
-  aula: '',
-  bloque: ''
-})
-
-const formularioHorario = ref({
-  asignacion: '',
-  diaSemana: '',
-  horaInicio: '',
-  horaFin: '',
-  tipoSesion: ''
-})
+const formularioAsignacion = ref({ curso: '', profesor: '', aula: '', bloque: '' })
+const formularioHorario = ref({ asignacion: '', diaSemana: '', horaInicio: '', horaFin: '', tipoSesion: 'Teoría', aulaOverride: null })
 
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const horasGrid = ['07:45', '08:30', '09:15', '10:00', '10:45', '11:45', '12:30', '13:15', '14:00', '14:45', '15:30', '16:30', '17:15', '18:00', '18:45', '19:30', '20:15', '21:00']
 
-const bloquesFiltrados = computed(() => {
-  if (!periodoSeleccionado.value) return []
-  return bloques.value.filter(b => b.periodo?._id === periodoSeleccionado.value)
-})
+const bloquesFiltrados = computed(() => periodoSeleccionado.value ? bloques.value.filter(b => b.periodo?._id === periodoSeleccionado.value) : [])
 
 const cursosDisponibles = computed(() => {
   if (!bloqueActual.value) return []
-  
-  const bloqueCarreraId = String(bloqueActual.value.carrera?._id || bloqueActual.value.carrera || '');
-  const bloqueSemestre = String(bloqueActual.value.semestreAcademico || '').trim().toUpperCase();
-
-  return cursos.value.filter(c => {
-    const cursoCarreraId = String(c.carrera?._id || c.carrera || '');
-    const cursoSemestre = String(c.semestre || '').trim().toUpperCase();
-    
-    return cursoCarreraId === bloqueCarreraId && cursoSemestre === bloqueSemestre;
-  });
+  const bcId = String(bloqueActual.value.carrera?._id || bloqueActual.value.carrera || '');
+  const sem = String(bloqueActual.value.semestreAcademico || '').trim().toUpperCase();
+  return cursos.value.filter(c => String(c.carrera?._id || c.carrera || '') === bcId && String(c.semestre || '').trim().toUpperCase() === sem);
 })
 
-const horasUnicas = computed(() => {
-  const horas = new Set()
-  asignaciones.value.forEach(asig => {
-    asig.horarios?.forEach(h => {
-      horas.add(h.horaInicio)
-    })
-  })
-  return Array.from(horas).sort()
+const progresoGeneral = computed(() => {
+  if (!cursosDisponibles.value.length) return 0
+  const total = cursosDisponibles.value.reduce((s, c) => s + c.horasTotal, 0)
+  const asig = cursosDisponibles.value.reduce((s, c) => s + getHorasAsignadas(c._id), 0)
+  return Math.round((asig / total) * 100)
 })
+
+function getAsignacionParaCurso(cursoId) {
+  return asignaciones.value.find(a => a.curso?._id === cursoId || a.curso === cursoId)
+}
+
+function getHorasAsignadas(cursoId) {
+  const asig = getAsignacionParaCurso(cursoId)
+  if (!asig || !asig.horarios) return 0
+  return asig.horarios.reduce((sum, h) => {
+    const [h1, m1] = h.horaInicio.split(':').map(Number)
+    const [h2, m2] = h.horaFin.split(':').map(Number)
+    const diff = (h2 * 60 + m2) - (h1 * 60 + m1)
+    return sum + Math.ceil(diff / 45) // Suponiendo horas pedagógicas de 45min
+  }, 0)
+}
+
+function isCursoCompletado(cursoId) {
+  const c = cursosDisponibles.value.find(x => x._id === cursoId)
+  return c && getHorasAsignadas(cursoId) >= c.horasTotal
+}
 
 function obtenerSesion(dia, hora) {
   for (const asig of asignaciones.value) {
-    if (!asig.horarios) continue
-    const horario = asig.horarios.find(h => h.diaSemana === dia && h.horaInicio === hora)
-    if (horario) {
+    const slot = asig.horarios?.find(h => h.diaSemana === dia && h.horaInicio === hora)
+    if (slot) {
       return {
-        curso: asig.curso?.codigo || '',
-        profesor: `${asig.profesor?.nombres || ''} ${asig.profesor?.apellidos || ''}`,
-        aula: asig.aula?.codigo || 'N/A',
-        tipo: (horario.tipoSesion || 'teoria').toLowerCase()
+        curso: asig.curso?.codigo || 'CUR',
+        profesor: `${asig.profesor?.apellidos || ''}`,
+        aula: slot.aula?.codigo || asig.aula?.codigo || 'S/A',
+        tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : 'teor'),
+        original: slot
       }
     }
   }
   return null
 }
 
-async function cargarPeriodos() {
-  try {
-    const response = await periodosService.getAll()
-    periodos.value = response.data.data
-    const activo = periodos.value.find(p => p.estado === 'activo')
-    if (activo) {
-      periodoSeleccionado.value = activo._id
-      await cargarBloquesPorPeriodo()
-    }
-  } catch (error) {
-    console.error('Error:', error)
-  }
-}
-
-async function cargarBloquesPorPeriodo() {
-  try {
-    const response = await bloquesService.getAll({ periodo: periodoSeleccionado.value })
-    bloques.value = response.data.data
-  } catch (error) {
-    console.error('Error:', error)
-  }
-}
-
-async function cargarInfoBloque() {
-  try {
-    const response = await bloquesService.getById(bloqueSeleccionado.value)
-    bloqueActual.value = response.data.data
-    
-    // Cargar específicamente los cursos de esta carrera y semestre para evitar problemas de paginación/límites
-    if (bloqueActual.value) {
-      const carreraId = bloqueActual.value.carrera?._id || bloqueActual.value.carrera;
-      const semestre = bloqueActual.value.semestreAcademico;
-      
-      const cursosRes = await cursosService.getAll({ 
-        carrera: carreraId, 
-        semestre: semestre,
-        limit: 500 // Suficiente para un semestre
-      });
-      cursos.value = cursosRes.data.data;
-    }
-    
-    await cargarAsignaciones()
-  } catch (error) {
-    console.error('Error:', error)
-  }
-}
-
-async function cargarAsignaciones() {
-  try {
-    const response = await api.get(`/asignaciones?bloque=${bloqueSeleccionado.value}`)
-    asignaciones.value = response.data.data
-    
-    // Cargar horarios para cada asignación
-    for (const asig of asignaciones.value) {
-      const horariosRes = await api.get(`/horarios?asignacion=${asig._id}`)
-      asig.horarios = horariosRes.data.data
-    }
-  } catch (error) {
-    console.error('Error:', error)
-  }
-}
-
-async function guardarAsignacion() {
-  try {
-    guardando.value = true
-    formularioAsignacion.value.bloque = bloqueSeleccionado.value
-    
-    if (asignacionActual.value) {
-      await api.put(`/asignaciones/${asignacionActual.value._id}`, formularioAsignacion.value)
-    } else {
-      await api.post('/asignaciones', formularioAsignacion.value)
-    }
-
-    await cargarAsignaciones()
-    mostrarModalAsignacion.value = false
-    formularioAsignacion.value = { curso: '', profesor: '', aula: '', bloque: '' }
-    asignacionActual.value = null
-  } catch (error) {
-    console.error('Error:', error)
-    alert('Error al guardar la asignación')
-  } finally {
-    guardando.value = false
-  }
-}
-
-function editarAsignacion(asignacion) {
-  asignacionActual.value = asignacion
-  formularioAsignacion.value = {
-    curso: asignacion.curso?._id || '',
-    profesor: asignacion.profesor?._id || '',
-    aula: asignacion.aula?._id || '',
-    bloque: bloqueSeleccionado.value
-  }
-  mostrarModalAsignacion.value = true
-}
-
-function agregarHorario(asignacion) {
-  asignacionActual.value = asignacion
+function manejarClickCelda(dia, hora) {
+  const cur = cursoSeleccionadoParaAsignar.value
+  if (!cur) return toast?.info('Selecciona un curso de la izquierda primero')
+  const asig = getAsignacionParaCurso(cur._id)
+  if (!asig) return toast?.info('Primero asigna un docente al curso')
+  
   horarioEditando.value = null
   formularioHorario.value = {
-    asignacion: asignacion._id,
-    diaSemana: '',
-    horaInicio: '',
-    horaFin: '',
+    asignacion: asig._id,
+    diaSemana: dia,
+    horaInicio: hora,
+    horaFin: calcularSiguienteHora(hora),
     tipoSesion: 'Teoría'
   }
   mostrarModalHorario.value = true
 }
 
-function editarHorario(horario) {
-  horarioEditando.value = horario
-  formularioHorario.value = {
-    asignacion: horario.asignacion,
-    diaSemana: horario.diaSemana,
-    horaInicio: horario.horaInicio,
-    horaFin: horario.horaFin,
-    tipoSesion: horario.tipoSesion
+function calcularSiguienteHora(hora) {
+  const idx = horasGrid.indexOf(hora)
+  if (idx !== -1 && idx < horasGrid.length - 1) return horasGrid[idx + 1]
+  const [h, m] = hora.split(':').map(Number)
+  const dt = new Date(0,0,0, h, m + 45)
+  return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
+}
+
+async function cargarPeriodos() {
+  const res = await periodosService.getAll(); periodos.value = res.data.data
+  const act = periodos.value.find(p => p.estado === 'activo')
+  if (act) { periodoSeleccionado.value = act._id; cargarBloquesPorPeriodo() }
+}
+
+async function cargarBloquesPorPeriodo() {
+  const res = await bloquesService.getAll({ periodo: periodoSeleccionado.value }); bloques.value = res.data.data
+}
+
+async function cargarInfoBloque() {
+  loadingStart()
+  const res = await bloquesService.getById(bloqueSeleccionado.value); bloqueActual.value = res.data.data
+  if (bloqueActual.value) {
+    const cRes = await cursosService.getAll({ carrera: bloqueActual.value.carrera?._id, semestre: bloqueActual.value.semestreAcademico, limit: 100 })
+    cursos.value = cRes.data.data
   }
-  mostrarModalHorario.value = true
+  await cargarAsignaciones(); loadingEnd()
+}
+
+async function cargarAsignaciones() {
+  const res = await api.get(`/asignaciones?bloque=${bloqueSeleccionado.value}`); asignaciones.value = res.data.data
+  for (let a of asignaciones.value) { const h = await api.get(`/horarios?asignacion=${a._id}`); a.horarios = h.data.data }
+}
+
+function abrirAsignacionParaCurso(curso) {
+  cursoSeleccionadoParaAsignar.value = curso
+  const asig = getAsignacionParaCurso(curso._id)
+  if (asig) {
+    asignacionActual.value = asig
+    formularioAsignacion.value = { curso: curso._id, profesor: asig.profesor?._id, aula: asig.aula?._id, bloque: bloqueSeleccionado.value }
+  } else {
+    asignacionActual.value = null
+    formularioAsignacion.value = { curso: curso._id, profesor: '', aula: '', bloque: bloqueSeleccionado.value }
+  }
+  mostrarModalAsignacion.value = true
+}
+
+async function guardarAsignacion() {
+  try {
+    guardando.value = true
+    if (asignacionActual.value) await api.put(`/asignaciones/${asignacionActual.value._id}`, formularioAsignacion.value)
+    else await api.post('/asignaciones', formularioAsignacion.value)
+    await cargarAsignaciones(); mostrarModalAsignacion.value = false
+  } catch (e) { toast?.error('Conflicto detectado') }
+  finally { guardando.value = false }
 }
 
 async function guardarHorario() {
   try {
     guardando.value = true
-    
-    if (horarioEditando.value) {
-       await api.put(`/horarios/${horarioEditando.value._id}`, formularioHorario.value)
-       toast.success('Éxito', 'Horario actualizado correctamente')
-    } else {
-       await api.post('/horarios', formularioHorario.value)
-       toast.success('Éxito', 'Horario agregado correctamente')
-    }
-
-    await cargarAsignaciones()
-    mostrarModalHorario.value = false
-  } catch (error) {
-    console.error('Error:', error)
-    const status = error.response?.status
-    const msg = error.response?.data?.message || 'Error al guardar el horario'
-    
-    if (status === 409) {
-      toast.error('Conflicto de Horario', msg)
-    } else {
-      toast.error('Error', msg)
-    }
-  } finally {
-    guardando.value = false
-  }
-}
-
-async function eliminarAsignacion(id) {
-  if (!confirm('¿Eliminar esta asignación? Se borrarán todos sus horarios.')) return
-  try {
-    await api.delete(`/asignaciones/${id}`)
-    toast.success('Eliminado', 'Asignación eliminada correctamente')
-    await cargarAsignaciones()
-  } catch (error) {
-    console.error('Error:', error)
-    toast.error('Error', 'No se pudo eliminar la asignación')
-  }
+    if (horarioEditando.value) await api.put(`/horarios/${horarioEditando.value._id}`, formularioHorario.value)
+    else await api.post('/horarios', formularioHorario.value)
+    await cargarAsignaciones(); mostrarModalHorario.value = false
+  } catch (e) { toast?.error('Cruce de Horario Detectado', e.response?.data?.message) }
+  finally { guardando.value = false }
 }
 
 async function eliminarHorario(id) {
-  if (!confirm('¿Eliminar este horario?')) return
-  try {
-    await api.delete(`/horarios/${id}`)
-    toast.success('Eliminado', 'Horario eliminado correctamente')
-    await cargarAsignaciones()
-  } catch (error) {
-    console.error('Error:', error)
-    toast.error('Error', 'No se pudo eliminar el horario')
-  }
+  if (confirm('¿Retirar esta sesión?')) { await api.delete(`/horarios/${id}`); cargarAsignaciones() }
 }
 
-async function cargarDatos() {
-  try {
-    const [profesoresRes, aulasRes] = await Promise.all([
-      profesoresService.getAll(),
-      aulasService.getAll()
-    ])
-    profesores.value = profesoresRes.data.data
-    aulas.value = aulasRes.data.data
-  } catch (error) {
-    console.error('Error:', error)
-  }
+const professorsAndAulas = async () => {
+  const [p, a] = await Promise.all([profesoresService.getAll(), aulasService.getAll()])
+  profesores.value = p.data.data; aulas.value = a.data.data
 }
 
-onMounted(async () => {
-  await Promise.all([
-    cargarPeriodos(),
-    cargarDatos()
-  ])
-})
+const loadingStart = () => document.body.classList.add('loading')
+const loadingEnd = () => document.body.classList.remove('loading')
+
+onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 </script>
 
 <style scoped>
-.asignar-horarios-view {
-  animation: fadeIn 0.6s ease-out;
-}
+.asignar-horarios-view { height: calc(100vh - 120px); display: flex; flex-direction: column; gap: 1.5rem; }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* Header & Selectors */
+.header-section { display: flex; flex-direction: column; gap: 1rem; }
+.stepper-minimal { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.03); width: fit-content; border-radius: 1rem; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
+.s-step.active { color: var(--accent); }
 
-.stepper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 3rem;
-  padding: 1rem;
-  background: rgba(255,255,255,0.03);
-  border-radius: 2rem;
-}
+.selector-bar { padding: 1rem 2rem; display: flex; align-items: center; }
+.selectors { display: flex; gap: 2rem; width: 100%; }
+.sel-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.sel-group.main { flex: 1; }
+.sel-group select { background: none; border: none; font-size: 1.1rem; font-weight: 900; color: var(--text-main); outline: none; padding: 0; cursor: pointer; }
 
-.step {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  opacity: 0.4;
-  transition: all 0.3s;
-}
+/* Workspace */
+.workspace-master { flex: 1; display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem; overflow: hidden; }
 
-.step.active { opacity: 1; }
-.step.completed { opacity: 0.8; color: var(--accent); }
+/* Sidebar */
+.academic-sidebar { display: flex; flex-direction: column; padding: 1.5rem; overflow: hidden; }
+.sidebar-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.sidebar-header h3 { font-size: 0.9rem; text-transform: uppercase; font-weight: 900; }
+.block-badge { background: var(--accent); color: white; padding: 0.2rem 0.6rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 900; }
 
-.step-num {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-}
+.course-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-right: 0.5rem; }
 
-.step.active .step-num {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-  box-shadow: 0 0 15px rgba(242, 101, 34, 0.4);
-}
+.course-progress-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 1rem; padding: 1rem; transition: all 0.3s; cursor: pointer; }
+.course-progress-card:hover, .course-progress-card.active { border-color: var(--accent); background: rgba(242, 101, 34, 0.05); }
+.course-progress-card.completed { border-color: #10b981; opacity: 0.8; }
 
-.step.completed .step-num {
-  background: #10b981;
-  border-color: #10b981;
-  color: white;
-}
+.c-info { display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
+.c-main { display: flex; flex-direction: column; }
+.c-code { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); }
+.c-name { font-size: 0.9rem; font-weight: 700; }
+.progress-txt { font-size: 0.75rem; font-weight: 900; color: var(--accent); }
 
-.step-line {
-  width: 50px;
-  height: 2px;
-  background: var(--border);
-}
+.c-progress-bar { height: 6px; background: rgba(0,0,0,0.2); border-radius: 3px; overflow: hidden; margin-bottom: 0.75rem; }
+.c-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s; }
+.completed .c-fill { background: #10b981; }
 
-.selector-card {
-  margin-bottom: 2rem;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.btn-add-session { width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 0.5rem; border-radius: 0.6rem; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
 
-.selector-card.minimized {
-  padding: 1rem 2.5rem;
-  opacity: 0.8;
-}
+.sidebar-footer { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+.total-progress label { font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+.p-bar-total { height: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; overflow: hidden; margin-bottom: 0.5rem; }
+.p-fill-total { height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); }
 
-.selector-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-top: 1.5rem;
-}
+/* Calendar Workspace */
+.calendar-workspace { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.calendar-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.legend-premium { display: flex; gap: 1.5rem; font-size: 0.75rem; font-weight: 800; }
+.legend-premium .box { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 0.5rem; }
+.leg-item.teor .box { background: var(--primary); }
+.leg-item.tall .box { background: #F26522; }
+.leg-item.labo .box { background: #10B981; }
 
-.custom-select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--bg-main);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--text-main);
-  font-weight: 600;
-  outline: none;
-  transition: border-color 0.2s;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 1.2em;
-}
+.calendar-overflow { flex: 1; overflow: auto; padding: 1.5rem; }
+.calendar-grid-premium { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
 
-.bloque-summary-pill {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  padding: 1rem 2.5rem;
-  border-radius: 3rem;
-  color: white;
-  margin-bottom: 2.5rem;
-  box-shadow: var(--shadow-lg);
-}
+.grid-time-label, .grid-day-header { background: var(--bg-main); padding: 1rem 0.5rem; text-align: center; font-size: 0.75rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; }
 
-.pill-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
+.time-label { background: var(--bg-main); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; }
 
-.pill-code { font-weight: 900; font-size: 1.25rem; }
-.pill-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.3); }
+.schedule-cell { background: var(--bg-card); min-height: 85px; padding: 0.25rem; transition: background 0.2s; cursor: cell; }
+.schedule-cell:hover { background: rgba(242, 101, 34, 0.05); }
 
-.main-content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 2rem;
-}
+.slot-premium { height: 100%; border-radius: 0.75rem; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.3rem; color: white; animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { opacity: 0; transform: scale(0.9); } }
 
-.assignment-card {
-  max-height: 850px;
-  overflow-y: auto;
-}
+.slot-premium.teor { background: linear-gradient(135deg, var(--primary), var(--secondary)); box-shadow: 0 4px 12px rgba(0, 66, 139, 0.3); }
+.slot-premium.tall { background: linear-gradient(135deg, #F26522, #FF8E53); box-shadow: 0 4px 12px rgba(242, 101, 34, 0.3); }
+.slot-premium.labo { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 
-.asignaciones-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  margin-top: 1.5rem;
-}
+.s-top { display: flex; justify-content: space-between; align-items: center; }
+.s-course { font-size: 0.8rem; font-weight: 900; }
+.s-del { background: none; border: none; color: white; font-size: 1rem; cursor: pointer; opacity: 0.7; }
+.s-del:hover { opacity: 1; }
+.s-prof { font-size: 0.65rem; font-weight: 700; opacity: 0.9; }
+.s-room { font-size: 0.6rem; font-weight: 800; background: rgba(0,0,0,0.1); padding: 0.1rem 0.4rem; border-radius: 0.3rem; width: fit-content; }
 
-.asignacion-glass-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.25rem;
-  padding: 1.5rem;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
+/* Empty State */
+.empty-workspace { flex: 1; display: flex; align-items: center; justify-content: center; }
+.empty-content { text-align: center; }
+.empty-art { font-size: 5rem; margin-bottom: 2rem; opacity: 0.2; }
 
-.asignacion-glass-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(252, 163, 17, 0.3);
-  transform: translateX(5px);
-}
-
-.btn-premium {
-  background: linear-gradient(135deg, var(--accent), #FF8E53);
-  color: white;
-  border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: var(--radius-md);
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(242, 101, 34, 0.3);
-}
-
-.btn-premium:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5);
-}
-
-.item-details {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  padding: 1.25rem;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px);
-  border-radius: 1rem;
-  margin: 1rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.detail-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; }
-.detail-val { font-size: 0.85rem; font-weight: 600; }
-
-.item-actions { display: flex; gap: 0.5rem; }
-.icon-btn { 
-  background: var(--bg-main); 
-  border: 1px solid var(--border); 
-  width: 32px; height: 32px; 
-  border-radius: 50%; 
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-}
-.icon-btn:hover { border-color: var(--accent); transform: scale(1.1); }
-
-.item-horarios {
-  border-top: 1px solid var(--border);
-  padding-top: 1rem;
-}
-
-.horarios-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.horarios-top h4 { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
-
-.text-btn {
-  background: rgba(242, 101, 34, 0.1);
-  border: 1px solid rgba(242, 101, 34, 0.2);
-  color: var(--accent);
-  padding: 0.3rem 0.8rem;
-  border-radius: 2rem;
-  font-weight: 800;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.text-btn:hover { background: var(--accent); color: white; }
-
-.horario-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.horario-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  padding: 0.35rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.horario-pill .day { font-weight: 900; color: var(--accent); }
-
-/* Calendar */
-.calendar-container {
-  margin-top: 1.5rem;
-  overflow-x: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-}
-
-.grid-header { display: grid; grid-template-columns: 80px repeat(6, 1fr); background: rgba(0,0,0,0.1); }
-.day-col { padding: 1rem; text-align: center; font-weight: 800; font-size: 0.8rem; }
-
-.grid-row { display: grid; grid-template-columns: 80px repeat(6, 1fr); border-top: 1px solid var(--border); }
-.time-cell { padding: 1rem; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.02); }
-
-.content-cell { padding: 0.25rem; border-left: 1px solid var(--border); min-height: 90px; }
-
-.slot-box {
-  padding: 0.6rem;
-  height: 100%;
-  border-radius: 0.6rem;
-  font-size: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.type-teoría { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
-.type-taller { background: linear-gradient(135deg, #10b981, #047857); color: white; }
-.type-laboratorio { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
-
-.slot-curso { font-weight: 900; }
-.slot-prof { font-size: 0.6rem; opacity: 0.9; }
-
-@media (max-width: 1400px) {
-  .main-content-grid { grid-template-columns: 1fr; }
-}
+@media (max-width: 1200px) { .workspace-master { grid-template-columns: 1fr; } .academic-sidebar { display: none; } }
 </style>
