@@ -1,133 +1,142 @@
 <template>
-  <div class="carreras-view">
+  <div class="carreras-view fadeIn">
     <div class="page-header">
-      <div>
-        <h1>🎓 Carreras Profesionales</h1>
-        <p>Gestiona las carreras del instituto</p>
+      <div class="header-title">
+        <h1 class="text-gradient">🎓 Carreras Profesionales</h1>
+        <p>Administración del catálogo de programas académicos</p>
       </div>
       <button class="btn btn-primary" @click="abrirModalNuevo">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path d="M12 4v16m8-8H4" />
         </svg>
         Nueva Carrera
       </button>
     </div>
 
-    <!-- Filtros -->
-    <div class="card filters">
+    <!-- Filtros Inteligentes -->
+    <div class="glass-card filters-card">
       <div class="filters-grid">
-        <input 
-          v-model="searchTerm" 
-          type="text" 
-          placeholder="Buscar carreras..."
-          class="search-input"
-        >
-        <select v-model="filtroActivo" class="filter-select">
-          <option value="">Todas</option>
-          <option value="true">Activas</option>
-          <option value="false">Inactivas</option>
-        </select>
-        <select v-model="porPagina" class="filter-select">
-          <option :value="20">20 por página</option>
-          <option :value="50">50 por página</option>
-          <option :value="100">100 por página</option>
-        </select>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            v-model="searchTerm" 
+            type="text" 
+            placeholder="Buscar por nombre o código..."
+            class="search-input"
+          >
+        </div>
+        <div class="select-group">
+          <select v-model="filtroActivo" class="modern-select">
+            <option value="">Todos los Estados</option>
+            <option value="true">Activas</option>
+            <option value="false">Inactivas</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <select v-model="porPagina" class="modern-select">
+            <option :value="20">20 registros</option>
+            <option :value="50">50 registros</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <!-- Tabla de carreras -->
-    <div class="card">
-      <div v-if="loading" class="loading">
-        <div class="spinner"></div>
-        <p>Cargando carreras...</p>
+    <!-- Tabla Dinámica -->
+    <div class="glass-card table-card">
+      <div v-if="loading" class="state-container">
+        <div class="spinner-modern"></div>
+        <p>Sincronizando carreras...</p>
       </div>
 
-      <table v-else class="table">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Nivel</th>
-            <th>Escuela</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="carrera in carrerasPaginadas" :key="carrera._id">
-            <td><span class="badge badge-primary">{{ carrera.codigo }}</span></td>
-            <td><strong>{{ carrera.nombre }}</strong></td>
-            <td>{{ carrera.nivel || 'N/A' }}</td>
-            <td>{{ carrera.escuela?.nombre || 'N/A' }}</td>
-            <td>
-              <span :class="['badge', carrera.activo ? 'badge-success' : 'badge-warning']">
-                {{ carrera.activo ? 'Activa' : 'Inactiva' }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-icon" @click="editarCarrera(carrera)" title="Editar">
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-                </svg>
-              </button>
-              <button class="btn-icon btn-danger" @click="eliminarCarrera(carrera)" title="Eliminar">
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="table-wrapper">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Identificador</th>
+              <th>Programa Académico</th>
+              <th>Información</th>
+              <th>Estado</th>
+              <th class="text-right">Gestión</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="carrera in carrerasPaginadas" :key="carrera._id">
+              <td>
+                <span class="code-badge">{{ carrera.codigo }}</span>
+              </td>
+              <td class="name-cell">
+                <strong>{{ carrera.nombre }}</strong>
+                <span class="sub-text">Catálogo {{ carrera.catalogo || '2024' }}</span>
+              </td>
+              <td>
+                <div class="info-cell">
+                  <span>🏫 {{ carrera.escuela?.nombre || 'N/A' }}</span>
+                  <span class="level-tag">{{ carrera.nivel || 'Técnico' }}</span>
+                </div>
+              </td>
+              <td>
+                <span :class="['status-pill', carrera.activo ? 'active' : 'inactive']">
+                  {{ carrera.activo ? 'Operativa' : 'Suspendida' }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="glass-btn edit" @click="editarCarrera(carrera)" title="Editar">
+                  ✏️
+                </button>
+                <button class="glass-btn delete" @click="eliminarCarrera(carrera)" title="Eliminar">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <p v-if="!loading && carrerasFiltradas.length === 0" class="empty-state">
-        No se encontraron carreras
-      </p>
+        <div v-if="carrerasFiltradas.length === 0" class="empty-state">
+           <div class="empty-icon">📂</div>
+           <p>No se encontraron carreras que coincidan con la búsqueda</p>
+        </div>
+      </div>
     </div>
 
     <!-- Paginación -->
-    <Pagination 
-      v-if="carrerasFiltradas.length > 0"
-      :current-page="paginaActual"
-      :per-page="porPagina"
-      :total="carrerasFiltradas.length"
-      @update:current-page="paginaActual = $event"
-    />
+    <div class="pagination-container">
+      <Pagination 
+        v-if="carrerasFiltradas.length > 0"
+        :current-page="paginaActual"
+        :per-page="porPagina"
+        :total="carrerasFiltradas.length"
+        @update:current-page="paginaActual = $event"
+      />
+    </div>
 
     <!-- Modal de Crear/Editar -->
     <Modal
       v-model="mostrarModal"
-      :titulo="carreraEditando ? 'Editar Carrera' : 'Nueva Carrera'"
+      :titulo="carreraEditando ? 'Configurar Carrera' : 'Registro de Carrera'"
       :loading="guardando"
       @guardar="guardarCarrera"
     >
       <form @submit.prevent="guardarCarrera" class="form-modal">
-        <div class="form-group">
-          <label>Código *</label>
-          <input 
-            v-model="formulario.codigo" 
-            type="text" 
-            class="form-input" 
-            placeholder="Ej: NAID"
-            required
-          >
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código Identificador</label>
+            <input v-model="formulario.codigo" type="text" class="form-input" placeholder="Ej: NAID" required>
+          </div>
+          <div class="form-group">
+            <label>Catálogo</label>
+            <input v-model="formulario.catalogo" type="text" class="form-input" placeholder="2024">
+          </div>
         </div>
 
         <div class="form-group">
-          <label>Nombre *</label>
-          <input 
-            v-model="formulario.nombre" 
-            type="text" 
-            class="form-input" 
-            placeholder="Ej: Administración Industrial"
-            required
-          >
+          <label>Nombre del Programa</label>
+          <input v-model="formulario.nombre" type="text" class="form-input" placeholder="Ej: Administración Industrial" required>
         </div>
 
         <div class="form-group">
-          <label>Escuela</label>
+          <label>Escuela / Facultad</label>
           <select v-model="formulario.escuela" class="form-input">
-            <option value="">Seleccionar escuela</option>
+            <option value="">Seleccionar escuela...</option>
             <option v-for="escuela in escuelas" :key="escuela._id" :value="escuela._id">
               {{ escuela.nombre }}
             </option>
@@ -136,26 +145,21 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Nivel</label>
+            <label>Nivel de Formación</label>
             <input v-model="formulario.nivel" type="text" class="form-input" placeholder="Pregrado">
           </div>
-
           <div class="form-group">
-            <label>Grado</label>
+            <label>Grado Académico</label>
             <input v-model="formulario.grado" type="text" class="form-input" placeholder="Profesional">
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Catálogo</label>
-          <input v-model="formulario.catalogo" type="text" class="form-input" placeholder="2024">
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input v-model="formulario.activo" type="checkbox">
-            <span>Carrera activa</span>
-          </label>
+        <div class="form-footer-check">
+           <label class="premium-checkbox">
+             <input v-model="formulario.activo" type="checkbox">
+             <span class="checkmark"></span>
+             <span class="label-text">Carrera Activa para Programación</span>
+           </label>
         </div>
       </form>
     </Modal>
@@ -163,13 +167,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useAppStore } from '../stores/app'
 import { carrerasService } from '../services'
+import api from '../services/api'
 import Modal from '../components/Modal.vue'
 import Pagination from '../components/Pagination.vue'
 
 const store = useAppStore()
+const toast = inject('toast')
 
 const searchTerm = ref('')
 const filtroActivo = ref('')
@@ -195,7 +201,6 @@ const escuelas = ref([])
 
 const carrerasFiltradas = computed(() => {
   let filtered = carreras.value
-
   if (searchTerm.value) {
     const term = searchTerm.value.toLowerCase()
     filtered = filtered.filter(c => 
@@ -203,11 +208,9 @@ const carrerasFiltradas = computed(() => {
       c.codigo.toLowerCase().includes(term)
     )
   }
-
   if (filtroActivo.value !== '') {
     filtered = filtered.filter(c => c.activo === (filtroActivo.value === 'true'))
   }
-
   return filtered
 })
 
@@ -220,13 +223,7 @@ const carrerasPaginadas = computed(() => {
 function abrirModalNuevo() {
   carreraEditando.value = null
   formulario.value = {
-    codigo: '',
-    nombre: '',
-    escuela: '',
-    nivel: '',
-    grado: '',
-    catalogo: '',
-    activo: true
+    codigo: '', nombre: '', escuela: '', nivel: '', grado: '', catalogo: '', activo: true
   }
   mostrarModal.value = true
 }
@@ -248,32 +245,32 @@ function editarCarrera(carrera) {
 async function guardarCarrera() {
   try {
     guardando.value = true
-    
     if (carreraEditando.value) {
       await carrerasService.update(carreraEditando.value._id, formulario.value)
+      toast?.success('Carrera actualizada correctamente')
     } else {
       await carrerasService.create(formulario.value)
+      toast?.success('Carrera registrada con éxito')
     }
-    
     await store.fetchCarreras()
     mostrarModal.value = false
   } catch (error) {
-    console.error('Error guardando carrera:', error)
-    alert('Error al guardar la carrera')
+    console.error('Error:', error)
+    toast?.error('Error al procesar la solicitud')
   } finally {
     guardando.value = false
   }
 }
 
 async function eliminarCarrera(carrera) {
-  if (!confirm(`¿Eliminar la carrera "${carrera.nombre}"?`)) return
-  
+  if (!confirm(`¿Está seguro de eliminar la carrera "${carrera.nombre}"?`)) return
   try {
     await carrerasService.delete(carrera._id)
     await store.fetchCarreras()
+    toast?.success('Registro eliminado')
   } catch (error) {
-    console.error('Error eliminando carrera:', error)
-    alert('Error al eliminar la carrera')
+    console.error('Error:', error)
+    toast?.error('No se pudo eliminar la carrera')
   }
 }
 
@@ -282,140 +279,76 @@ async function cargarEscuelas() {
     const response = await api.get('/escuelas')
     escuelas.value = response.data.data
   } catch (error) {
-    console.error('Error cargando escuelas:', error)
+    console.error('Error:', error)
   }
 }
 
 onMounted(async () => {
   loading.value = true
-  await Promise.all([
-    store.fetchCarreras(),
-    cargarEscuelas()
-  ])
+  await Promise.all([ store.fetchCarreras(), cargarEscuelas() ])
   loading.value = false
 })
 </script>
 
 <style scoped>
 .carreras-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  animation: fadeIn 0.6s ease-out;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-end;
+  margin-bottom: 2.5rem;
 }
 
-.page-header h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-}
+.header-title h1 { font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem; }
+.header-title p { color: var(--text-muted); font-size: 1.1rem; }
 
-.page-header p {
-  color: var(--gray);
-}
+/* Filters */
+.filters-card { padding: 1.5rem 2rem; margin-bottom: 2rem; }
+.filters-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.5rem; }
 
-.filters {
-  margin-bottom: 1.5rem;
-}
+.search-box { position: relative; }
+.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); opacity: 0.5; }
+.search-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; }
+.search-input:focus { border-color: var(--accent); }
 
-.filters-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 1rem;
-}
+.modern-select { width: 100%; padding: 0.8rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; }
 
-.search-input,
-.filter-select {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
+/* Table */
+.table-card { padding: 0; overflow: hidden; }
+.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table th { text-align: left; padding: 1.25rem 2rem; background: rgba(0,0,0,0.02); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+.modern-table td { padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); }
+.modern-table tr:hover { background: rgba(255,255,255,0.02); }
 
-.search-input:focus,
-.filter-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
+.code-badge { background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 0.4rem; font-size: 0.8rem; font-weight: 800; font-family: monospace; }
+.name-cell { display: flex; flex-direction: column; }
+.name-cell strong { font-size: 1rem; margin-bottom: 0.25rem; }
+.sub-text { font-size: 0.75rem; color: var(--text-muted); }
 
-.btn-danger {
-  color: var(--danger);
-}
+.info-cell { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; }
+.level-tag { background: rgba(0,0,0,0.05); padding: 0.1rem 0.4rem; border-radius: 0.2rem; font-size: 0.7rem; width: fit-content; }
 
-.btn-danger:hover {
-  background: #fee2e2;
-}
+.status-pill { padding: 0.3rem 0.8rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 800; }
+.status-pill.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.status-pill.inactive { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 
-.form-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+.actions-cell { display: flex; gap: 0.75rem; justify-content: flex-end; }
+.glass-btn { background: var(--bg-main); border: 1px solid var(--border); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; filter: grayscale(1); }
+.glass-btn:hover { filter: grayscale(0); transform: scale(1.1); border-color: var(--accent); }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+/* Checklist Premium */
+.form-footer-check { margin-top: 1rem; }
+.premium-checkbox { display: flex; align-items: center; gap: 1rem; cursor: pointer; font-weight: 700; user-select: none; }
+.premium-checkbox input { display: none; }
+.checkmark { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; position: relative; transition: all 0.3s; }
+.premium-checkbox input:checked + .checkmark { background: var(--accent); border-color: var(--accent); }
+.premium-checkbox input:checked + .checkmark::after { content: '✓'; color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: 900; }
 
-.form-group label {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--dark);
-}
-
-.form-input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: all 0.2s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .filters-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 992px) {
+  .filters-grid { grid-template-columns: 1fr; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
 }
 </style>
