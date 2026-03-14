@@ -21,18 +21,18 @@
       <div class="bento-stats glass-card">
         <h3>Estado del Sistema</h3>
         <div class="stat-items">
-          <div class="stat-item">
+          <router-link to="/carreras" class="stat-item clickable">
             <div class="stat-value">{{ carreras.length }}</div>
             <div class="stat-label">Carreras</div>
-          </div>
-          <div class="stat-item">
+          </router-link>
+          <router-link to="/cursos" class="stat-item clickable">
             <div class="stat-value">{{ cursos.length }}</div>
             <div class="stat-label">Cursos</div>
-          </div>
-          <div class="stat-item">
+          </router-link>
+          <router-link to="/profesores" class="stat-item clickable">
             <div class="stat-value">{{ profesores.length }}</div>
             <div class="stat-label">Docentes</div>
-          </div>
+          </router-link>
         </div>
         <div class="pulse-container">
           <span class="pulse-dot"></span>
@@ -73,11 +73,27 @@
         </div>
       </router-link>
 
-      <router-link to="/reportes" class="feature-card glass-card span-2">
+      <router-link to="/profesores" class="feature-card glass-card">
+        <div class="feature-icon">👨‍🏫</div>
+        <div class="feature-info">
+          <h3>Gestión Docente</h3>
+          <p>Administración de instructores, especialidades y disponibilidad.</p>
+        </div>
+      </router-link>
+
+      <router-link to="/aulas" class="feature-card glass-card">
+        <div class="feature-icon">🚪</div>
+        <div class="feature-info">
+          <h3>Infraestructura</h3>
+          <p>Control de aulas teóricas, laboratorios y talleres tecnológicos.</p>
+        </div>
+      </router-link>
+
+      <router-link to="/reportes" class="feature-card glass-card span-1">
         <div class="feature-icon">📊</div>
         <div class="feature-info">
-          <h3>Generador de Reportes</h3>
-          <p>Exportación profesional a PDF de cargas académicas y disponibilidad de infraestructura.</p>
+          <h3>Reportes</h3>
+          <p>Exportación a PDF de cargas académicas.</p>
         </div>
       </router-link>
     </section>
@@ -247,6 +263,14 @@ function abrirChat() {
   align-items: flex-end;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.stat-item.clickable:hover {
+  transform: translateX(5px);
+  border-bottom-color: var(--accent);
 }
 
 .stat-value {
