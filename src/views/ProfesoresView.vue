@@ -1,123 +1,114 @@
 <template>
-  <div class="profesores-view">
+  <div class="profesores-view fadeIn">
     <div class="page-header">
-      <div>
-        <h1>👨‍🏫 Profesores</h1>
-        <p>Gestiona el registro de docentes</p>
+      <div class="header-content">
+        <h1 class="text-gradient">👨‍🏫 Gestión Docente</h1>
+        <p>Administración del registro de instructores y especialistas</p>
       </div>
-      <button class="btn btn-primary" @click="abrirModalNuevo">
-        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+      <button class="btn btn-premium" @click="abrirModalNuevo">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+          <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Nuevo Profesor
+        <span>Nuevo Profesor</span>
       </button>
     </div>
 
-    <!-- Filtros -->
-    <div class="card filtros-card">
+    <!-- Filtros Inteligentes -->
+    <div class="glass-card filters-card">
       <div class="filtros-grid">
-        <input 
-          v-model="busqueda" 
-          type="text" 
-          placeholder="Buscar por nombre, código..."
-          class="filtro-input"
-        >
-        <select v-model="estadoFiltro" class="filtro-select">
-          <option value="">Todos</option>
-          <option value="true">Activos</option>
-          <option value="false">Inactivos</option>
-        </select>
-        <select v-model="porPagina" class="filtro-select">
-          <option :value="20">20 por página</option>
-          <option :value="50">50 por página</option>
-          <option :value="100">100 por página</option>
-        </select>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input 
+            v-model="busqueda" 
+            type="text" 
+            placeholder="Buscar por nombre, código o especialidad..."
+            class="search-input"
+          >
+        </div>
+        <div class="select-group">
+          <select v-model="estadoFiltro" class="modern-select">
+            <option value="">Todos los Estados</option>
+            <option value="true">Activos</option>
+            <option value="false">Inactivos</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <select v-model="porPagina" class="modern-select">
+            <option :value="24">24 por página</option>
+            <option :value="48">48 por página</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <!-- Vista de Profesores -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Cargando profesores...</p>
+    <div v-if="loading" class="state-container">
+      <div class="spinner-modern"></div>
+      <p>Sincronizando plantilla docente...</p>
     </div>
 
     <div v-else class="profesores-grid">
-      <div v-for="profesor in profesoresPaginados" :key="profesor._id" class="profesor-card">
-        <div class="profesor-avatar">
-          <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-          </svg>
-        </div>
-
-        <div class="profesor-info">
-          <div class="profesor-header">
-            <h3>{{ profesor.nombres }} {{ profesor.apellidos }}</h3>
-            <span :class="['estado-badge', profesor.activo ? 'activo' : 'inactivo']">
-              {{ profesor.activo ? 'Activo' : 'Inactivo' }}
-            </span>
+      <div v-for="profesor in profesoresPaginados" :key="profesor._id" class="profesor-glass-card">
+        <div class="card-inner">
+          <div class="profesor-avatar-wrapper">
+            <div class="profesor-avatar">
+              <span class="avatar-initials">{{ profesor.nombres.charAt(0) }}{{ profesor.apellidos.charAt(0) }}</span>
+            </div>
+            <div :class="['status-dot', profesor.activo ? 'active' : 'inactive']"></div>
           </div>
 
-          <div v-if="profesor.codigo" class="profesor-codigo">
-            <span class="badge badge-primary">{{ profesor.codigo }}</span>
-          </div>
-
-          <div class="profesor-detalles">
-            <div v-if="profesor.especialidad" class="detalle-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
-              </svg>
-              <span>{{ profesor.especialidad }}</span>
+          <div class="profesor-main-info">
+            <div class="profesor-header">
+              <div class="name-group">
+                <h3>{{ profesor.nombres }} {{ profesor.apellidos }}</h3>
+                <span class="profesor-code">{{ profesor.codigo || 'S/C' }}</span>
+              </div>
             </div>
 
-            <div v-if="profesor.email" class="detalle-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-              </svg>
-              <span>{{ profesor.email }}</span>
-            </div>
-
-            <div v-if="profesor.telefono" class="detalle-item">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-              </svg>
-              <span>{{ profesor.telefono }}</span>
+            <div class="profesor-details-list">
+              <div v-if="profesor.especialidad" class="detail-pill">
+                <span class="icon">🎓</span>
+                <span class="text">{{ profesor.especialidad }}</span>
+              </div>
+              <div v-if="profesor.email" class="detail-pill">
+                <span class="icon">📧</span>
+                <span class="text">{{ profesor.email }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="profesor-acciones">
-          <button class="btn-icon" @click="editarProfesor(profesor)" title="Editar">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-            </svg>
-          </button>
-          <button class="btn-icon btn-danger" @click="eliminarProfesor(profesor)" title="Eliminar">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-            </svg>
-          </button>
+          <div class="profesor-footer-actions">
+            <button class="action-btn edit" @click="editarProfesor(profesor)" title="Editar">
+              ✏️
+            </button>
+            <button class="action-btn delete" @click="eliminarProfesor(profesor)" title="Eliminar">
+              🗑️
+            </button>
+          </div>
         </div>
       </div>
 
-      <p v-if="profesoresFiltrados.length === 0" class="empty-state">
-        📭 No se encontraron profesores
-      </p>
+      <div v-if="profesoresFiltrados.length === 0" class="empty-state">
+        <div class="empty-icon">📂</div>
+        <p>No se encontraron registros para esta búsqueda</p>
+      </div>
     </div>
 
     <!-- Paginación -->
-    <Pagination 
-      v-if="profesoresFiltrados.length > 0"
-      :current-page="paginaActual"
-      :per-page="porPagina"
-      :total="profesoresFiltrados.length"
-      @update:current-page="paginaActual = $event"
-    />
+    <div class="pagination-wrapper">
+      <Pagination 
+        v-if="profesoresFiltrados.length > 0"
+        :current-page="paginaActual"
+        :per-page="porPagina"
+        :total="profesoresFiltrados.length"
+        @update:current-page="paginaActual = $event"
+      />
+    </div>
 
     <!-- Modal -->
     <Modal
       v-model="mostrarModal"
-      :titulo="profesorEditando ? 'Editar Profesor' : 'Nuevo Profesor'"
+      :titulo="profesorEditando ? 'Configurar Profesor' : 'Nuevo Registro Docente'"
       :loading="guardando"
       @guardar="guardarProfesor"
     >
@@ -125,45 +116,46 @@
         <div class="form-row">
           <div class="form-group">
             <label>Nombres *</label>
-            <input v-model="formulario.nombres" type="text" class="form-input" required>
+            <input v-model="formulario.nombres" type="text" class="form-input" placeholder="Nombres del docente" required>
           </div>
           <div class="form-group">
             <label>Apellidos *</label>
-            <input v-model="formulario.apellidos" type="text" class="form-input" required>
+            <input v-model="formulario.apellidos" type="text" class="form-input" placeholder="Apellidos del docente" required>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Código</label>
-            <input v-model="formulario.codigo" type="text" class="form-input">
+            <label>Código de Empleado</label>
+            <input v-model="formulario.codigo" type="text" class="form-input" placeholder="Ej: P12345">
           </div>
           <div class="form-group">
-            <label>DNI</label>
-            <input v-model="formulario.dni" type="text" class="form-input" maxlength="8">
+            <label>DNI / Identificación</label>
+            <input v-model="formulario.dni" type="text" class="form-input" maxlength="8" placeholder="Documento de identidad">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Especialidad</label>
-          <input v-model="formulario.especialidad" type="text" class="form-input">
+          <label>Especialidad Académica</label>
+          <input v-model="formulario.especialidad" type="text" class="form-input" placeholder="Ej: Ingeniería de Software, Matemáticas...">
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Email</label>
-            <input v-model="formulario.email" type="email" class="form-input">
+            <label>Correo Institucional</label>
+            <input v-model="formulario.email" type="email" class="form-input" placeholder="docente@senati.edu.pe">
           </div>
           <div class="form-group">
-            <label>Teléfono</label>
-            <input v-model="formulario.telefono" type="tel" class="form-input">
+            <label>Teléfono de Contacto</label>
+            <input v-model="formulario.telefono" type="tel" class="form-input" placeholder="+51 ...">
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="checkbox-label">
+        <div class="form-group-checkbox">
+          <label class="premium-checkbox">
             <input v-model="formulario.activo" type="checkbox">
-            <span>Profesor activo</span>
+            <span class="checkmark"></span>
+            <span class="label-text">Profesor habilitado para programación de horarios</span>
           </label>
         </div>
       </form>
@@ -185,7 +177,7 @@ const guardando = ref(false)
 const mostrarModal = ref(false)
 const profesorEditando = ref(null)
 const paginaActual = ref(1)
-const porPagina = ref(20)
+const porPagina = ref(24)
 
 const formulario = ref({
   nombres: '',
@@ -206,7 +198,8 @@ const profesoresFiltrados = computed(() => {
     filtered = filtered.filter(p =>
       p.nombres.toLowerCase().includes(term) ||
       p.apellidos.toLowerCase().includes(term) ||
-      (p.codigo && p.codigo.toLowerCase().includes(term))
+      (p.codigo && p.codigo.toLowerCase().includes(term)) ||
+      (p.especialidad && p.especialidad.toLowerCase().includes(term))
     )
   }
 
@@ -226,14 +219,8 @@ const profesoresPaginados = computed(() => {
 function abrirModalNuevo() {
   profesorEditando.value = null
   formulario.value = {
-    nombres: '',
-    apellidos: '',
-    codigo: '',
-    dni: '',
-    especialidad: '',
-    email: '',
-    telefono: '',
-    activo: true
+    nombres: '', apellidos: '', codigo: '', dni: '', especialidad: '',
+    email: '', telefono: '', activo: true
   }
   mostrarModal.value = true
 }
@@ -256,18 +243,15 @@ function editarProfesor(profesor) {
 async function guardarProfesor() {
   try {
     guardando.value = true
-    
     if (profesorEditando.value) {
       await profesoresService.update(profesorEditando.value._id, formulario.value)
     } else {
       await profesoresService.create(formulario.value)
     }
-    
     await cargarProfesores()
     mostrarModal.value = false
   } catch (error) {
     console.error('Error guardando profesor:', error)
-    alert('Error al guardar el profesor')
   } finally {
     guardando.value = false
   }
@@ -275,13 +259,11 @@ async function guardarProfesor() {
 
 async function eliminarProfesor(profesor) {
   if (!confirm(`¿Eliminar a ${profesor.nombres} ${profesor.apellidos}?`)) return
-  
   try {
     await profesoresService.delete(profesor._id)
     await cargarProfesores()
   } catch (error) {
     console.error('Error eliminando profesor:', error)
-    alert('Error al eliminar el profesor')
   }
 }
 
@@ -304,214 +286,185 @@ onMounted(() => {
 
 <style scoped>
 .profesores-view {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-end;
+  margin-bottom: 2.5rem;
 }
 
-.page-header h1 {
-  font-size: 2rem;
+.header-content h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+.header-content p { color: var(--text-muted); font-size: 1.1rem; }
+
+.btn-premium {
+  background: linear-gradient(135deg, var(--accent), #FF8E53);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(242, 101, 34, 0.3);
 }
 
-.page-header p {
-  color: var(--gray);
+.btn-premium:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(242, 101, 34, 0.5);
 }
 
-.filtros-card {
-  margin-bottom: 2rem;
-}
+/* Filters */
+.filters-card { padding: 1.5rem 2rem; margin-bottom: 2.5rem; }
+.filtros-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.5rem; }
 
-.filtros-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 1rem;
-}
+.search-box { position: relative; }
+.search-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 1.1rem; }
+.search-input { width: 100%; padding: 0.8rem 1rem 0.8rem 3rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 600; outline: none; transition: all 0.2s; }
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(242, 101, 34, 0.1); }
 
-.filtro-input,
-.filtro-select {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
+.modern-select { width: 100%; padding: 0.82rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-weight: 700; outline: none; cursor: pointer; }
 
+/* Grid */
 .profesores-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
-.profesor-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
-  display: flex;
-  gap: 1.5rem;
-  transition: all 0.3s;
+.profesor-glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 1.75rem;
   position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.profesor-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+.profesor-glass-card:hover {
+  transform: translateY(-10px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(242, 101, 34, 0.3);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
 }
 
-.profesor-avatar {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: white;
-  border-radius: 50%;
+.card-inner {
   display: flex;
+  gap: 1.5rem;
   align-items: center;
-  justify-content: center;
+}
+
+.profesor-avatar-wrapper {
+  position: relative;
   flex-shrink: 0;
 }
 
-.profesor-info {
-  flex: 1;
-}
-
-.profesor-header {
+.profesor-avatar {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: 2rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
-.profesor-header h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--dark);
+.avatar-initials {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: white;
+  letter-spacing: -1px;
 }
 
-.estado-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.status-dot {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 4px solid var(--bg-main);
 }
 
-.estado-badge.activo {
-  background: #d1fae5;
-  color: #065f46;
-}
+.status-dot.active { background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+.status-dot.inactive { background: #94a3b8; }
 
-.estado-badge.inactivo {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.profesor-codigo {
-  margin-bottom: 1rem;
-}
-
-.profesor-detalles {
+.profesor-main-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.detalle-item {
+.name-group h3 { font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.2rem; }
+.profesor-code { font-size: 0.7rem; font-weight: 800; background: rgba(0,0,0,0.2); padding: 0.1rem 0.6rem; border-radius: 0.4rem; color: var(--text-muted); text-transform: uppercase; width: fit-content; }
+
+.profesor-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-pill {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--gray);
-}
-
-.detalle-item svg {
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.profesor-acciones {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-danger {
-  color: var(--danger);
-}
-
-.btn-danger:hover {
-  background: #fee2e2;
-}
-
-.form-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
+  gap: 0.6rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--dark);
+  color: var(--text-muted);
 }
 
-.form-input {
-  padding: 0.75rem 1rem;
+.profesor-footer-actions {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.3s;
+}
+
+.profesor-glass-card:hover .profesor-footer-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.checkbox-label {
+  background: var(--bg-card);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
+.action-btn:hover { transform: scale(1.1); border-color: var(--accent); }
+.action-btn.delete:hover { border-color: #ef4444; }
+
+/* Premium Checkbox */
+.premium-checkbox { display: flex; align-items: center; gap: 1rem; cursor: pointer; font-weight: 700; user-select: none; }
+.premium-checkbox input { display: none; }
+.checkmark { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; position: relative; transition: all 0.3s; }
+.premium-checkbox input:checked + .checkmark { background: var(--accent); border-color: var(--accent); }
+.premium-checkbox input:checked + .checkmark::after { content: '✓'; color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: 900; }
 
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .profesores-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filtros-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+  .filtros-grid { grid-template-columns: 1fr; }
+  .profesores-grid { grid-template-columns: 1fr; }
 }
 </style>
