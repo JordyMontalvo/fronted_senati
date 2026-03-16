@@ -72,11 +72,13 @@
         </div>
         
         <div class="course-list">
-          <div v-for="curso in cursosDisponibles" :key="curso._id" class="course-progress-card" 
+          <div v-for="curso in cursosDisponibles" :key="curso._id" class="course-progress-card draggable-course" 
                :class="{ 
                  completed: isCursoCompletado(curso._id),
                  active: cursoSeleccionadoParaAsignar?._id === curso._id
                }"
+               draggable="true"
+               @dragstart="manejarDragStartCurso(curso)"
                @click="seleccionarCursoParaPlanificar(curso)">
             <div class="c-info">
               <div class="c-main">
@@ -115,26 +117,34 @@
         <div v-if="cursoSeleccionadoParaAsignar" class="ai-suggestions-panel fadeIn">
            <div class="panel-header">
              <span class="ai-spark">✨</span>
-             <h4>Sugerencias de la IA</h4>
+             <h4>Sugerencias Rápidas</h4>
            </div>
-           <p class="panel-desc">
-             Disponibilidad para: 
-             <strong>{{ getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id)?.profesor ? `${getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id).profesor.nombres}` : 'Sin docente' }}</strong>
-           </p>
-           
            <div v-if="cargandoSugerencias" class="slots-loading">
               <div class="spinner-small"></div>
-              <span>Consultando IA...</span>
+              <span>IA Consultando...</span>
            </div>
            <div v-else class="slots-list">
               <div v-for="slot in sugerenciasIA" :key="slot.dia + slot.hora" class="suggestion-tag" @click="aplicarSugerenciaIA(slot)">
                 {{ slot.dia }} {{ slot.hora }} <span>+</span>
               </div>
               <div v-if="sugerenciasIA.length === 0" class="no-slots">
-                No se hallaron bloques contiguos libres
+                Sin bloques contiguos libres
               </div>
            </div>
         </div>
+
+        <!-- Botón de Planificación Inteligente (Gemini) -->
+        <button 
+          class="btn-smart-ia" 
+          @click="planificarConGemini"
+          :disabled="guardando || progresoGeneral === 100"
+        >
+          <span class="ia-icon">🧠</span>
+          <div class="ia-text">
+            <strong>Planificador Gemini</strong>
+            <small>IA Generativa Multimodal</small>
+          </div>
+        </button>
 
         <div class="sidebar-footer">
           <div class="total-progress">
@@ -731,34 +741,65 @@ function manejarDragOver(dia, hora) {
   celdaDragOver.value = `${dia}-${hora}`
 }
 
+const cursoSiendoArrastrado = ref(null)
+
+function manejarDragStartCurso(curso) {
+  if (isCursoCompletado(curso._id)) return
+  cursoSiendoArrastrado.value = curso
+  seleccionarCursoParaPlanificar(curso)
+}
+
+function manejarDragStart(slot) {
+  slotSiendoArrastrado.value = slot
+}
+
 async function manejarDrop(dia, hora) {
   const slot = slotSiendoArrastrado.value
+  const cursoDrag = cursoSiendoArrastrado.value
   celdaDragOver.value = null
-  if (!slot) return
-
-  if (esHoraOcupadaProfesor(dia, hora)) {
-    return toast?.error('Conflicto', 'El docente tiene otra clase en ese horario.')
+  
+  // Caso 1: Mover un horario existente
+  if (slot) {
+    if (esHoraOcupadaProfesor(dia, hora)) {
+      return toast?.error('Conflicto', 'El docente tiene otra clase en ese horario.')
+    }
+    try {
+      guardando.value = true
+      const duration = calcularDuracion(slot.horaInicio, slot.horaFin)
+      const nuevaHoraFin = sumarMinutos(hora, duration)
+      await api.put(`/horarios/${slot._id}`, { ...slot, diaSemana: dia, horaInicio: hora, horaFin: nuevaHoraFin })
+      toast?.success('Horario actualizado')
+      await cargarAsignaciones()
+    } catch (e) {
+      toast?.error('Error al mover', e.response?.data?.message || 'Cruce detectado')
+    } finally {
+      guardando.value = false
+      slotSiendoArrastrado.value = null
+    }
+  } 
+  // Caso 2: Nuevo horario desde el sidebar
+  else if (cursoDrag) {
+    const asig = getAsignacionParaCurso(cursoDrag._id)
+    if (!asig) {
+      toast?.info('Primero vincula un docente al curso')
+      return
+    }
+    manejarClickCelda(dia, hora) // Reutilizamos el modal de creación
+    cursoSiendoArrastrado.value = null
   }
+}
 
+async function planificarConGemini() {
+  toast?.info('Gemini AI', 'Analizando disponibilidad y optimizando malla...')
   try {
     guardando.value = true
-    const duration = calcularDuracion(slot.horaInicio, slot.horaFin)
-    const nuevaHoraFin = sumarMinutos(hora, duration)
-    
-    await api.put(`/horarios/${slot._id}`, {
-      ...slot,
-      diaSemana: dia,
-      horaInicio: hora,
-      horaFin: nuevaHoraFin
-    })
-    
-    toast?.success('Horario actualizado', `Clase movida a ${dia} ${hora}`)
+    const res = await api.post(`/bloques/${bloqueSeleccionado.value}/planificar-gemini`)
+    toast?.success('Planificación Exitosa', res.data.message)
     await cargarAsignaciones()
   } catch (e) {
-    toast?.error('Error al mover', e.response?.data?.message || 'Cruce detectado')
+    toast?.error('Gemini Error', e.response?.data?.message || 'Error en el modelo de IA')
   } finally {
     guardando.value = false
-    slotSiendoArrastrado.value = null
   }
 }
 
@@ -1245,6 +1286,24 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .context-item .v { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem; }
+
+/* Botón Gemini */
+.btn-smart-ia { width: 100%; margin: 1.5rem 0; background: linear-gradient(135deg, #4F46E5, #9333EA); border: none; border-radius: 1.25rem; padding: 1.2rem; color: white; cursor: pointer; display: flex; align-items: center; gap: 1rem; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 25px rgba(147, 51, 234, 0.3); border: 1px solid rgba(255,255,255,0.1); }
+.btn-smart-ia:hover:not(:disabled) { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 40px rgba(147, 51, 234, 0.5); filter: brightness(1.1); }
+.btn-smart-ia:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+.ia-icon { font-size: 1.8rem; background: rgba(255,255,255,0.15); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: inset 0 0 10px rgba(255,255,255,0.2); animation: ia-pulse 3s infinite; }
+
+@keyframes ia-pulse { 
+  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(255,255,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+.ia-text { text-align: left; }
+.ia-text strong { display: block; font-size: 0.95rem; font-weight: 800; }
+.ia-text small { font-size: 0.65rem; opacity: 0.8; font-weight: 600; text-transform: uppercase; }
+
+.draggable-course { cursor: grab; }
+.draggable-course:active { cursor: grabbing; }
 
 /* Admin Sidebar Improvements */
 .docente-status-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 1rem; padding: 1.2rem; margin-top: 1.5rem; transition: all 0.3s; }
