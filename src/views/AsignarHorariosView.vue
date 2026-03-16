@@ -791,10 +791,6 @@ function manejarDragStartCurso(curso) {
   seleccionarCursoParaPlanificar(curso)
 }
 
-function manejarDragStart(slot) {
-  slotSiendoArrastrado.value = slot
-}
-
 async function manejarDrop(dia, hora) {
   const slot = slotSiendoArrastrado.value
   const cursoDrag = cursoSiendoArrastrado.value
