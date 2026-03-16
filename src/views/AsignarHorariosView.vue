@@ -32,11 +32,43 @@
 
     <!-- MAIN WORKSPACE -->
     <div v-if="bloqueActual" class="workspace-master fadeIn">
-      <!-- SIDEBAR: Academic Progress -->
+      <!-- Sidebar de Control Admin -->
       <aside class="academic-sidebar glass-card">
         <div class="sidebar-header">
-          <h3>Malla Académica</h3>
-          <span class="block-badge">{{ bloqueActual.codigo }}</span>
+          <h3>Estructura del Bloque</h3>
+          <div class="block-badge" v-if="bloqueActual">{{ bloqueActual.codigo }}</div>
+        </div>
+
+        <!-- Nueva Sección: Estado del Docente Seleccionado -->
+        <div v-if="cursoSeleccionadoParaAsignar" class="docente-status-card animate-in">
+          <div class="status-header">
+            <span class="pulse-icon"></span>
+            <h4>Estado del Especialista</h4>
+          </div>
+          <div class="docente-info" v-if="getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id)">
+            <p class="d-name">{{ getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id).profesor?.apellidos }}, {{ getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id).profesor?.nombres }}</p>
+            <div class="d-stats">
+              <div class="d-stat">
+                <span class="ds-l">Carga Total</span>
+                <span class="ds-v">{{ totalHorasProfesorGlobal }}h / 40h</span>
+              </div>
+              <div class="d-stat" :class="{ 'has-conflicts': tieneConflictosExternos }">
+                <span class="ds-l">Conflictos Ext.</span>
+                <span class="ds-v">{{ profesorBusySlots.length }} detectados</span>
+              </div>
+            </div>
+            <div class="busy-list" v-if="profesorBusySlots.length">
+              <small>Ocupado en otros bloques:</small>
+              <ul>
+                <li v-for="slot in profesorBusySlots.slice(0, 3)" :key="slot._id">
+                  {{ slot.diaSemana }} {{ formatTime(slot.horaInicio) }} ({{ slot.asignacion?.bloque?.codigo || 'Ext' }})
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div v-else class="no-docente-msg">
+            <p>Vincule un docente para ver su disponibilidad institucional.</p>
+          </div>
         </div>
         
         <div class="course-list">
@@ -65,6 +97,10 @@
             </div>
             <div class="c-progress-bar">
               <div class="c-fill" :style="{ width: `${(getHorasAsignadas(curso._id) / curso.horasTotal) * 100}%` }"></div>
+            </div>
+
+            <div v-if="getAsignacionParaCurso(curso._id)" class="c-instructor-tag">
+              👨‍🏫 {{ getAsignacionParaCurso(curso._id).profesor?.apellidos }}
             </div>
             
             <div class="c-actions">
@@ -165,8 +201,10 @@
                   :class="{ 
                     'drag-over': celdaDragOver === `${dia}-${hora}`,
                     'is-suggested': sugerenciasIA.some(s => s.dia === dia && s.hora === hora),
-                    'is-busy-prof': esHoraOcupadaProfesor(dia, hora)
+                    'is-busy-prof': esHoraOcupadaProfesor(dia, hora),
+                    'is-invalid-zone': cursoSeleccionadoParaAsignar && esHoraOcupadaProfesor(dia, hora)
                   }"
+                  :title="getCollisionTitle(dia, hora)"
                   @dragover.prevent="manejarDragOver(dia, hora)"
                   @drop="manejarDrop(dia, hora)"
                   @click="manejarClickCelda(dia, hora)"
@@ -410,6 +448,22 @@ function formatRoman(sem) {
   }
   return map[s] || s
 }
+const totalHorasProfesorGlobal = computed(() => {
+  if (!profesorBusySlots.value.length) return 0
+  return profesorBusySlots.value.length * 3 // Asumiendo bloques de 3h pedagógicas
+})
+
+const tieneConflictosExternos = computed(() => profesorBusySlots.value.length > 0)
+
+function getCollisionTitle(dia, hora) {
+  if (!esHoraOcupadaProfesor(dia, hora)) return ''
+  const slot = profesorBusySlots.value.find(s => s.diaSemana === dia && s.horaInicio === hora)
+  if (slot) {
+    return `CONFLICTO: El docente ya tiene clases en el Bloque ${slot.asignacion?.bloque?.codigo || 'Externo'}`
+  }
+  return 'Horario ocupado en otro bloque'
+}
+
 function formatTime(hora) {
   if (!hora) return ''
   const [h, m] = hora.split(':').map(Number)
@@ -1191,6 +1245,32 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .context-item .v { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
 
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem; }
+
+/* Admin Sidebar Improvements */
+.docente-status-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 1rem; padding: 1.2rem; margin-top: 1.5rem; transition: all 0.3s; }
+.status-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.pulse-icon { width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; box-shadow: 0 0 10px #3B82F6; animation: pulse 2s infinite; }
+.status-header h4 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin: 0; }
+.d-name { font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; }
+.d-stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.d-stat { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+.ds-l { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+.ds-v { font-size: 0.9rem; font-weight: 800; color: var(--text-main); }
+.d-stat.has-conflicts .ds-v { color: #EF4444; }
+
+.busy-list { background: rgba(0,0,0,0.1); padding: 0.8rem; border-radius: 0.5rem; }
+.busy-list small { display: block; margin-bottom: 0.4rem; font-weight: 700; color: var(--text-muted); }
+.busy-list ul { list-style: none; padding: 0; margin: 0; }
+.busy-list li { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+
+.c-instructor-tag { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); padding: 0.3rem 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; text-transform: uppercase; }
+
+/* Grid Live Conflicts */
+.schedule-cell.is-invalid-zone { background: rgba(239, 68, 68, 0.05) !important; cursor: not-allowed; }
+.schedule-cell.is-invalid-zone:hover { background: rgba(239, 68, 68, 0.15) !important; border: 1px dashed #EF4444; }
+
+.animate-in { animation: fadeInRight 0.5s ease-out; }
+@keyframes fadeInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
 @media (max-width: 1200px) { .workspace-master { grid-template-columns: 1fr; } .academic-sidebar { display: none; } }
 </style>
