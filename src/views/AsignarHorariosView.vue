@@ -34,9 +34,20 @@
     <div v-if="bloqueActual" class="workspace-master fadeIn">
       <!-- Sidebar de Control Admin -->
       <aside class="academic-sidebar glass-card">
-        <div class="sidebar-header">
+        <div class="sidebar-header" v-if="!cursoSeleccionadoParaAsignar">
           <h3>Estructura del Bloque</h3>
           <div class="block-badge" v-if="bloqueActual">{{ bloqueActual.codigo }}</div>
+        </div>
+
+        <!-- Cabecera de Selección Dinámica -->
+        <div v-else class="sidebar-selection-header fadeIn">
+          <button class="btn-back" @click="cursoSeleccionadoParaAsignar = null">
+            ← Volver a la lista
+          </button>
+          <div class="selection-detail">
+            <span class="badg-code">{{ cursoSeleccionadoParaAsignar.codigo }}</span>
+            <h4>{{ cursoSeleccionadoParaAsignar.nombre }}</h4>
+          </div>
         </div>
 
         <!-- Nueva Sección: Estado del Docente Seleccionado -->
@@ -71,7 +82,7 @@
           </div>
         </div>
         
-        <div class="course-list">
+        <div class="course-list" v-if="!cursoSeleccionadoParaAsignar">
           <div v-for="curso in cursosDisponibles" :key="curso._id" class="course-progress-card draggable-course" 
                :class="{ 
                  completed: isCursoCompletado(curso._id),
@@ -169,6 +180,9 @@
             <div v-if="conflictosBloque.length > 0" class="conflict-status-badge" @click="mostrarPanelConflictos = !mostrarPanelConflictos">
               ⚠️ {{ conflictosBloque.length }} Conflictos
             </div>
+            <button class="btn-automation secondary" @click="limpiarHorariosBloque" title="Limpiar todos los horarios de este bloque">
+              🗑️ Borrar Todo
+            </button>
             <button class="btn-automation magic" @click="autoAsignarBloqueActual" :disabled="guardando">
               <span class="ai-spark">✨</span> 
               {{ guardando ? 'IA Pensando...' : 'Auto-Asignar Bloque' }}
@@ -638,6 +652,28 @@ async function seleccionarCursoParaPlanificar(curso) {
     cargandoSugerencias.value = false
   } else {
     profesorBusySlots.value = []
+  }
+}
+
+async function limpiarHorariosBloque() {
+  if (!confirm('¿Estás seguro de eliminar TODOS los horarios de este bloque? Esta acción no se puede deshacer.')) return
+  
+  try {
+    guardando.value = true
+    // Encontrar todas las asignaciones de este bloque para borrar sus horarios
+    for (const asig of asignaciones.value) {
+      if (asig.horarios && asig.horarios.length > 0) {
+        for (const h of asig.horarios) {
+          await api.delete(`/horarios/${h._id}`)
+        }
+      }
+    }
+    toast?.success('Bloque Limpio', 'Se han eliminado todos los horarios.')
+    await cargarAsignaciones()
+  } catch (e) {
+    toast?.error('Error al limpiar', 'No se pudieron eliminar algunos registros.')
+  } finally {
+    guardando.value = false
   }
 }
 
@@ -1332,4 +1368,43 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 @keyframes fadeInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
 @media (max-width: 1200px) { .workspace-master { grid-template-columns: 1fr; } .academic-sidebar { display: none; } }
+
+/* Sidebar Selection Focus */
+.sidebar-selection-header {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-main);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: transform 0.2s;
+  padding: 0;
+}
+
+.btn-back:hover { transform: translateX(-4px); }
+
+.selection-detail h4 {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin-top: 0.25rem;
+}
+
+.badg-code {
+  background: var(--accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+}
 </style>
