@@ -417,6 +417,11 @@ function isCursoCompletado(cursoId) {
   return c && getHorasAsignadas(cursoId) >= c.horasTotal
 }
 
+function getPreviaHora(hora) {
+  const idx = horasGrid.indexOf(hora)
+  return idx > 0 ? horasGrid[idx - 1] : null
+}
+
 function obtenerSesion(dia, hora) {
   const [hGrid, mGrid] = hora.split(':').map(Number)
   const minutosGrid = hGrid * 60 + mGrid
@@ -433,17 +438,31 @@ function obtenerSesion(dia, hora) {
       const minStart = hStart * 60 + mStart
       const minEnd = hEnd * 60 + mEnd
       
-      // La celda del grid (ej: 07:45) pertenece a la sesión si está dentro del rango [inicio, fin)
       return minutosGrid >= minStart && minutosGrid < minEnd
     })
 
     if (slot) {
+      // Determinamos si es el inicio visual: si NO hay sesión en la hora anterior del grid
+      const prevHora = getPreviaHora(hora)
+      let esContinuacion = false
+      if (prevHora) {
+        const [hp, mp] = prevHora.split(':').map(Number)
+        const minP = hp * 60 + mp
+        esContinuacion = asig.horarios.some(h => {
+          if (h.diaSemana !== dia) return false
+          const [hS, mS] = h.horaInicio.split(':').map(Number)
+          const [hE, mE] = h.horaFin.split(':').map(Number)
+          return minP >= hS * 60 + mS && minP < hE * 60 + mE
+        })
+      }
+
       return {
-        curso: asig.curso?.nombre?.substring(0, 25) || 'CUR',
+        id: slot._id,
+        curso: asig.curso?.nombre?.substring(0, 30) || 'CURSO',
         profesor: `${asig.profesor?.apellidos || 'Docente'}`,
         aula: slot.aula?.codigo || asig.aula?.codigo || 'S/A',
         tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : 'teor'),
-        isStart: slot.horaInicio === hora, // Para saber si mostramos el texto o solo el color si es continuación
+        isStart: !esContinuacion, 
         original: slot
       }
     }
@@ -1127,16 +1146,17 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .slot-premium.labo { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 
 .s-top { display: flex; justify-content: space-between; align-items: center; }
-.s-course { font-size: 0.8rem; font-weight: 900; }
+.s-course { font-size: 0.8rem; font-weight: 900; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .s-del { background: none; border: none; color: white; font-size: 1rem; cursor: pointer; opacity: 0.7; }
 .s-del:hover { opacity: 1; }
 .s-prof { font-size: 0.65rem; font-weight: 700; opacity: 0.9; }
 .s-room { font-size: 0.6rem; font-weight: 800; background: rgba(0,0,0,0.1); padding: 0.1rem 0.4rem; border-radius: 0.3rem; width: fit-content; }
 
-/* Empty State */
-.empty-workspace { flex: 1; display: flex; align-items: center; justify-content: center; }
-.empty-content { text-align: center; }
-.empty-art { font-size: 5rem; margin-bottom: 2rem; opacity: 0.2; }
+/* Modal Design Fixes */
+.horario-context { display: flex; gap: 2rem; background: rgba(0,0,0,0.03); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; }
+.context-item { display: flex; flex-direction: column; gap: 0.2rem; }
+.context-item .l { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+.context-item .v { font-size: 1rem; font-weight: 900; color: var(--text-main); }
 
 @media (max-width: 1200px) { .workspace-master { grid-template-columns: 1fr; } .academic-sidebar { display: none; } }
 </style>
