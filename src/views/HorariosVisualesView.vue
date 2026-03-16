@@ -88,9 +88,9 @@
               <template v-if="isInicioSesion(horario, hora)">
                 <div class="horario-curso">{{ horario.curso?.nombre }}</div>
                 <div class="horario-profesor">
-                  👨‍🏫 {{ horario.profesor?.nombres }} {{ horario.profesor?.apellidos?.charAt(0) }}.
+                  👨‍🏫 {{ horario.profesor?.apellidos }}, {{ horario.profesor?.nombres }}
                 </div>
-                <div class="horario-aula">📍 {{ horario.aula?.codigo }}</div>
+                <div class="horario-aula">🏛️ {{ horario.aula?.edificio ? `${horario.aula.edificio} - ` : '' }}{{ horario.aula?.codigo }}</div>
                 <div class="horario-tiempo">{{ horario.horaInicio }} - {{ horario.horaFin }}</div>
               </template>
             </div>

@@ -157,7 +157,7 @@
 
             <!-- Grid Content -->
             <template v-for="hora in horasGrid" :key="hora">
-              <div class="time-label">{{ hora }}</div>
+              <div class="time-label">{{ formatTime(hora) }}</div>
               <div 
                   v-for="dia in diasSemana" 
                   :key="dia" 
@@ -184,17 +184,17 @@
                     draggable="true"
                     @dragstart="manejarDragStart(obtenerSesion(dia, hora).original)"
                     @click.stop="editarHorario(obtenerSesion(dia, hora).original)">
-                    
                     <template v-if="obtenerSesion(dia, hora).isStart">
                       <div class="s-top">
-                        <span class="s-course">{{ obtenerSesion(dia, hora).curso }}</span>
+                        <span class="s-time">{{ formatTime(obtenerSesion(dia, hora).original.horaInicio) }} - {{ formatTime(obtenerSesion(dia, hora).original.horaFin) }}</span>
                         <button class="s-del" @click.stop="eliminarHorario(obtenerSesion(dia, hora).original._id)">×</button>
                       </div>
                       <div class="s-mid">
-                        <span class="s-prof">{{ obtenerSesion(dia, hora).profesor }}</span>
+                        <div class="s-course">{{ obtenerSesion(dia, hora).curso }}</div>
                       </div>
                       <div class="s-bot">
-                        <span class="s-room">📍 {{ obtenerSesion(dia, hora).aula }}</span>
+                        <div class="s-prof">{{ obtenerSesion(dia, hora).profesor }}</div>
+                        <div class="s-room">🏛️ {{ obtenerSesion(dia, hora).aula }}</div>
                       </div>
                     </template>
                   </div>
@@ -259,12 +259,32 @@
       <form @submit.prevent="guardarHorario" class="form-modal">
         <div class="horario-context">
           <div class="context-item">
-             <span class="l">Día</span>
-             <span class="v">{{ formularioHorario.diaSemana }}</span>
+             <span class="l">Curso</span>
+             <span class="v">{{ cursoSeleccionadoParaAsignar?.nombre }}</span>
           </div>
-          <div class="context-item">
-             <span class="l">Inicio</span>
-             <span class="v">{{ formularioHorario.horaInicio }}</span>
+          <div class="context-item" v-if="formularioHorario.aulaOverride || asignacionActual?.aula">
+             <span class="l">Edificio/Sede</span>
+             <span class="v">{{ getEdificioActual() }}</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Día de la Semana</label>
+            <select v-model="formularioHorario.diaSemana" class="form-input">
+              <option v-for="d in diasSemana" :key="d" :value="d">{{ d }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hora de Inicio *</label>
+            <input v-model="formularioHorario.horaInicio" type="time" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label>Hora de Término *</label>
+            <input v-model="formularioHorario.horaFin" type="time" class="form-input" required>
           </div>
         </div>
 
@@ -277,12 +297,6 @@
           </select>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Hora de Término *</label>
-            <input v-model="formularioHorario.horaFin" type="time" class="form-input" required>
-          </div>
-        </div>
         
         <div class="form-group">
           <label>Cambiar Aula para esta sesión</label>
@@ -396,9 +410,22 @@ function formatRoman(sem) {
   }
   return map[s] || s
 }
+function formatTime(hora) {
+  if (!hora) return ''
+  const [h, m] = hora.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 || 12
+  return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`
+}
 
 function getAsignacionParaCurso(cursoId) {
   return asignaciones.value.find(a => a.curso?._id === cursoId || a.curso === cursoId)
+}
+
+function getEdificioActual() {
+  const aulaId = formularioHorario.value.aulaOverride || asignacionActual.value?.aula?._id || asignacionActual.value?.aula
+  const found = aulas.value.find(a => a._id === aulaId)
+  return found?.edificio || 'Sede Principal'
 }
 
 function getHorasAsignadas(cursoId) {
@@ -456,11 +483,14 @@ function obtenerSesion(dia, hora) {
         })
       }
 
+      const building = slot.aula?.edificio || asig.aula?.edificio || ''
+      const buildingPrefix = building ? `${building} - ` : ''
+
       return {
         id: slot._id,
-        curso: asig.curso?.nombre?.substring(0, 30) || 'CURSO',
-        profesor: `${asig.profesor?.apellidos || 'Docente'}`,
-        aula: slot.aula?.codigo || asig.aula?.codigo || 'S/A',
+        curso: asig.curso?.nombre?.substring(0, 35) || 'CURSO',
+        profesor: asig.profesor ? `${asig.profesor.apellidos}, ${asig.profesor.nombres}` : 'Docente no asignado',
+        aula: `${buildingPrefix}${slot.aula?.codigo || asig.aula?.codigo || 'S/A'}`,
         tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : 'teor'),
         isStart: !esContinuacion, 
         original: slot
@@ -1145,18 +1175,22 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .slot-premium.tall { background: linear-gradient(135deg, #F26522, #FF8E53); box-shadow: 0 4px 12px rgba(242, 101, 34, 0.3); }
 .slot-premium.labo { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 
-.s-top { display: flex; justify-content: space-between; align-items: center; }
-.s-course { font-size: 0.8rem; font-weight: 900; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.s-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
+.s-time { font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.85); font-style: italic; }
+.s-course { font-size: 0.85rem; font-weight: 900; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.3rem; }
 .s-del { background: none; border: none; color: white; font-size: 1rem; cursor: pointer; opacity: 0.7; }
 .s-del:hover { opacity: 1; }
-.s-prof { font-size: 0.65rem; font-weight: 700; opacity: 0.9; }
-.s-room { font-size: 0.6rem; font-weight: 800; background: rgba(0,0,0,0.1); padding: 0.1rem 0.4rem; border-radius: 0.3rem; width: fit-content; }
+.s-bot { margin-top: auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.s-prof { font-size: 0.65rem; font-weight: 700; opacity: 0.9; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-room { font-size: 0.65rem; font-weight: 800; background: rgba(0,0,0,0.15); padding: 0.2rem 0.5rem; border-radius: 0.4rem; white-space: nowrap; width: fit-content; }
 
 /* Modal Design Fixes */
-.horario-context { display: flex; gap: 2rem; background: rgba(0,0,0,0.03); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; }
-.context-item { display: flex; flex-direction: column; gap: 0.2rem; }
-.context-item .l { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
-.context-item .v { font-size: 1rem; font-weight: 900; color: var(--text-main); }
+.horario-context { display: flex; flex-direction: column; gap: 1rem; background: rgba(242, 101, 34, 0.05); padding: 1.2rem; border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid var(--accent); }
+.context-item { display: flex; flex-direction: column; gap: 0.3rem; }
+.context-item .l { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em; }
+.context-item .v { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem; }
 
 @media (max-width: 1200px) { .workspace-master { grid-template-columns: 1fr; } .academic-sidebar { display: none; } }
 </style>
