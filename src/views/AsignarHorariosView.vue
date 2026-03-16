@@ -22,7 +22,7 @@
             <select v-model="bloqueSeleccionado" @change="cargarInfoBloque">
               <option value="">Seleccionar bloque objetivo...</option>
               <option v-for="b in bloquesFiltrados" :key="b._id" :value="b._id">
-                {{ b.codigo }} - {{ b.carrera?.nombre }} (Sem. {{ b.semestreAcademico }})
+                {{ b.codigo }} - {{ b.carrera?.nombre }} (Sem. {{ formatRoman(b.semestreAcademico) }})
               </option>
             </select>
           </div>
@@ -308,7 +308,7 @@
           <select v-model="bloqueOrigenId" class="form-input">
             <option value="">Seleccionar bloque...</option>
             <option v-for="b in bloquesParaClonar" :key="b._id" :value="b._id">
-              {{ b.codigo }} - {{ b.carrera?.nombre }} ({{ b.semestreAcademico }}°)
+              {{ b.codigo }} - {{ b.carrera?.nombre }} (Sem. {{ formatRoman(b.semestreAcademico) }})
             </option>
           </select>
         </div>
@@ -379,6 +379,20 @@ const progresoGeneral = computed(() => {
   const asig = cursosDisponibles.value.reduce((s, c) => s + getHorasAsignadas(c._id), 0)
   return Math.round((asig / total) * 100)
 })
+
+function formatRoman(sem) {
+  if (!sem) return ''
+  const s = String(sem).toUpperCase().trim()
+  const map = {
+    '1': 'I', 'I': 'I', 'PRIMERO': 'I',
+    '2': 'II', 'II': 'II', 'SEGUNDO': 'II',
+    '3': 'III', 'III': 'III', 'TERCERO': 'III',
+    '4': 'IV', 'IV': 'IV', 'IIII': 'IV', 'CUARTO': 'IV',
+    '5': 'V', 'V': 'V', 'IIIII': 'V', 'QUINTO': 'V',
+    '6': 'VI', 'VI': 'VI', 'IIIIII': 'VI', 'SEXTO': 'VI'
+  }
+  return map[s] || s
+}
 
 function getAsignacionParaCurso(cursoId) {
   return asignaciones.value.find(a => a.curso?._id === cursoId || a.curso === cursoId)
