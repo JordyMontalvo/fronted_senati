@@ -14,7 +14,7 @@
           <h1>📅 Horario del Bloque {{ bloque.codigo }}</h1>
           <div class="badges">
             <span class="badge badge-primary">{{ bloque.carrera?.nombre }}</span>
-            <span class="badge badge-success">Semestre {{ bloque.semestreAcademico }}</span>
+            <span class="badge badge-success">Semestre {{ formatRoman(bloque.semestreAcademico) }}</span>
             <span :class="['badge', `badge-${getEstadoColor(bloque.estado)}`]">
               {{ bloque.estado }}
             </span>
@@ -157,6 +157,20 @@ const cursosUnicos = computed(() => {
   
   return Array.from(cursosMap.values())
 })
+
+function formatRoman(sem) {
+  if (!sem) return ''
+  const s = String(sem).toUpperCase().trim()
+  const map = {
+    '1': 'I', 'I': 'I', 'PRIMERO': 'I',
+    '2': 'II', 'II': 'II', 'SEGUNDO': 'II',
+    '3': 'III', 'III': 'III', 'TERCERO': 'III',
+    '4': 'IV', 'IV': 'IV', 'IIII': 'IV', 'CUARTO': 'IV',
+    '5': 'V', 'V': 'V', 'IIIII': 'V', 'QUINTO': 'V',
+    '6': 'VI', 'VI': 'VI', 'IIIIII': 'VI', 'SEXTO': 'VI'
+  }
+  return map[s] || s
+}
 
 function obtenerSesion(dia, hora) {
   const sesion = horarios.value.find(h => h.diaSemana === dia && h.horaInicio === hora)

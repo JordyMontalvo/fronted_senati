@@ -95,7 +95,7 @@
           <select v-model="filtro.bloque">
             <option value="">Todos</option>
             <option v-for="bloque in bloquesGenerados" :key="bloque.codigo" :value="bloque.codigo">
-              {{ bloque.codigo }} - {{ bloque.carrera }}
+              {{ bloque.codigo }} - {{ bloque.carrera }} (Sem. {{ formatRoman(bloque.semestre) }})
             </option>
           </select>
         </div>
@@ -331,6 +331,20 @@ const horariosFiltrados = computed(() => {
 const getCarrera = (codigoBloque) => {
   const bloque = bloquesGenerados.value.find(b => b.codigo === codigoBloque)
   return bloque ? bloque.carrera : 'Sin carrera'
+}
+
+function formatRoman(sem) {
+  if (!sem) return ''
+  const s = String(sem).toUpperCase().trim()
+  const map = {
+    '1': 'I', 'I': 'I', 'PRIMERO': 'I',
+    '2': 'II', 'II': 'II', 'SEGUNDO': 'II',
+    '3': 'III', 'III': 'III', 'TERCERO': 'III',
+    '4': 'IV', 'IV': 'IV', 'IIII': 'IV', 'CUARTO': 'IV',
+    '5': 'V', 'V': 'V', 'IIIII': 'V', 'QUINTO': 'V',
+    '6': 'VI', 'VI': 'VI', 'IIIIII': 'VI', 'SEXTO': 'VI'
+  }
+  return map[s] || s
 }
 
 const cargarDatosPreview = () => {

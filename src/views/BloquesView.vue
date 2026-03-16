@@ -94,7 +94,7 @@
             </div>
             <div class="meta-row">
               <span class="label">Nivel Académico</span>
-              <span class="value">Semestre {{ bloque.semestreAcademico }}</span>
+              <span class="value">Semestre {{ formatRoman(bloque.semestreAcademico) }}</span>
             </div>
             
             <div class="capacity-section">
@@ -183,7 +183,9 @@
             <label>Semestre Académico *</label>
             <select v-model="formulario.semestreAcademico" class="form-input" required>
               <option value="">Seleccionar</option>
-              <option v-for="i in 6" :key="i" :value="'I'.repeat(i)">Semestre {{ 'I'.repeat(i) }}</option>
+              <option v-for="sem in ['I', 'II', 'III', 'IV', 'V', 'VI']" :key="sem" :value="sem">
+                Semestre {{ sem }}
+              </option>
             </select>
           </div>
           <div class="form-group">
@@ -252,6 +254,20 @@ const bloquesPaginados = computed(() => {
   const skip = (paginaActual.value - 1) * porPagina.value
   return bloquesFiltrados.value.slice(skip, skip + porPagina.value)
 })
+
+function formatRoman(sem) {
+  if (!sem) return ''
+  const s = String(sem).toUpperCase().trim()
+  const map = {
+    '1': 'I', 'I': 'I', 'PRIMERO': 'I',
+    '2': 'II', 'II': 'II', 'SEGUNDO': 'II',
+    '3': 'III', 'III': 'III', 'TERCERO': 'III',
+    '4': 'IV', 'IV': 'IV', 'IIII': 'IV', 'CUARTO': 'IV',
+    '5': 'V', 'V': 'V', 'IIIII': 'V', 'QUINTO': 'V',
+    '6': 'VI', 'VI': 'VI', 'IIIIII': 'VI', 'SEXTO': 'VI'
+  }
+  return map[s] || s
+}
 
 function verHorario(bloque) {
   router.push(`/horarios/bloque/${bloque._id}`)
