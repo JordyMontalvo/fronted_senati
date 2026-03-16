@@ -34,28 +34,33 @@
     <div v-if="bloqueActual" class="workspace-master fadeIn">
       <!-- Sidebar de Control Admin -->
       <aside class="academic-sidebar glass-card">
-        <div class="sidebar-header" v-if="!cursoSeleccionadoParaAsignar">
-          <h3>Estructura del Bloque</h3>
-          <div class="block-badge" v-if="bloqueActual">{{ bloqueActual.codigo }}</div>
-        </div>
-
-        <!-- Cabecera de Selección Dinámica -->
-        <div v-else class="sidebar-selection-header fadeIn">
-          <button class="btn-back" @click="cursoSeleccionadoParaAsignar = null">
-            ← Volver a la lista
-          </button>
-          <div class="selection-detail">
-            <span class="badg-code">{{ cursoSeleccionadoParaAsignar.codigo }}</span>
-            <h4>{{ cursoSeleccionadoParaAsignar.nombre }}</h4>
+        <!-- CABECERA DINÁMICA: Cambia si hay un curso seleccionado -->
+        <div class="sidebar-header-wrapper">
+          <div v-if="!cursoSeleccionadoParaAsignar" class="sidebar-header fadeIn">
+            <h3>Estructura del Bloque</h3>
+            <div class="block-badge">{{ bloqueActual?.codigo }}</div>
+          </div>
+          <div v-else class="sidebar-selection-header fadeIn">
+            <button class="btn-back-main" @click="cursoSeleccionadoParaAsignar = null">
+              <span class="icon">←</span> Volver a la lista
+            </button>
+            <div class="selection-box">
+              <span class="badge-mini">{{ cursoSeleccionadoParaAsignar.codigo }}</span>
+              <h4>{{ cursoSeleccionadoParaAsignar.nombre }}</h4>
+            </div>
           </div>
         </div>
 
-        <!-- Nueva Sección: Estado del Docente Seleccionado -->
+        <!-- SECCIÓN: ESTADO DEL ESPECIALISTA (Solo en Focus Mode) -->
         <div v-if="cursoSeleccionadoParaAsignar" class="docente-status-card animate-in">
           <div class="status-header">
-            <span class="pulse-icon"></span>
-            <h4>Estado del Especialista</h4>
+            <div class="l-side">
+              <span class="pulse-icon"></span>
+              <h4>Estado del Especialista</h4>
+            </div>
+            <button class="btn-close-focus" @click="cursoSeleccionadoParaAsignar = null" title="Cerrar enfoque">✕</button>
           </div>
+          
           <div class="docente-info" v-if="getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id)">
             <p class="d-name">{{ getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id).profesor?.apellidos }}, {{ getAsignacionParaCurso(cursoSeleccionadoParaAsignar._id).profesor?.nombres }}</p>
             <div class="d-stats">
@@ -81,7 +86,8 @@
             <p>Vincule un docente para ver su disponibilidad institucional.</p>
           </div>
         </div>
-        
+
+        <!-- LISTA DE CURSOS (Solo si NO hay focus) -->
         <div class="course-list" v-if="!cursoSeleccionadoParaAsignar">
           <div v-for="curso in cursosDisponibles" :key="curso._id" class="course-progress-card draggable-course" 
                :class="{ 
@@ -124,7 +130,7 @@
           </div>
         </div>
 
-        <!-- AI Suggestions Panel -->
+        <!-- PANEL DE SUGERENCIAS IA (Solo en Focus Mode) -->
         <div v-if="cursoSeleccionadoParaAsignar" class="ai-suggestions-panel fadeIn">
            <div class="panel-header">
              <span class="ai-spark">✨</span>
@@ -1371,40 +1377,87 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 
 /* Sidebar Selection Focus */
 .sidebar-selection-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   padding: 1rem;
   background: var(--bg-main);
   border-radius: 1rem;
   border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-.btn-back {
-  background: none;
-  border: none;
+.btn-back-main {
+  background: var(--primary-glow);
+  border: 1px solid var(--primary);
   color: var(--primary);
   font-weight: 800;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   cursor: pointer;
-  margin-bottom: 0.5rem;
-  transition: transform 0.2s;
-  padding: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  width: fit-content;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.btn-back:hover { transform: translateX(-4px); }
+.btn-back-main:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateX(-4px);
+}
 
-.selection-detail h4 {
-  font-size: 0.95rem;
+.selection-box h4 {
+  font-size: 0.9rem;
   font-weight: 900;
   color: var(--text-main);
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
+  line-height: 1.2;
 }
 
-.badg-code {
+.badge-mini {
   background: var(--accent);
   color: white;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 900;
   padding: 0.1rem 0.4rem;
-  border-radius: 0.25rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.l-side {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-close-focus {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-close-focus:hover {
+  background: #EF4444;
+  color: white;
+  transform: rotate(90deg);
 }
 </style>
