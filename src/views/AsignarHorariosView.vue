@@ -180,22 +180,25 @@
                   <div 
                     v-if="obtenerSesion(dia, hora)" 
                     class="slot-premium"
-                    :class="obtenerSesion(dia, hora).tipo"
+                    :class="[obtenerSesion(dia, hora).tipo, { 'is-continuation': !obtenerSesion(dia, hora).isStart }]"
                     draggable="true"
                     @dragstart="manejarDragStart(obtenerSesion(dia, hora).original)"
                     @click.stop="editarHorario(obtenerSesion(dia, hora).original)">
-                  <div class="s-top">
-                    <span class="s-course">{{ obtenerSesion(dia, hora).curso }}</span>
-                    <button class="s-del" @click.stop="eliminarHorario(obtenerSesion(dia, hora).original._id)">×</button>
-                  </div>
-                  <div class="s-mid">
-                    <span class="s-prof">{{ obtenerSesion(dia, hora).profesor }}</span>
-                  </div>
-                  <div class="s-bot">
-                     <span class="s-room">📍 {{ obtenerSesion(dia, hora).aula }}</span>
+                    
+                    <template v-if="obtenerSesion(dia, hora).isStart">
+                      <div class="s-top">
+                        <span class="s-course">{{ obtenerSesion(dia, hora).curso }}</span>
+                        <button class="s-del" @click.stop="eliminarHorario(obtenerSesion(dia, hora).original._id)">×</button>
+                      </div>
+                      <div class="s-mid">
+                        <span class="s-prof">{{ obtenerSesion(dia, hora).profesor }}</span>
+                      </div>
+                      <div class="s-bot">
+                        <span class="s-room">📍 {{ obtenerSesion(dia, hora).aula }}</span>
+                      </div>
+                    </template>
                   </div>
                 </div>
-              </div>
             </template>
           </div>
         </div>
@@ -415,14 +418,32 @@ function isCursoCompletado(cursoId) {
 }
 
 function obtenerSesion(dia, hora) {
+  const [hGrid, mGrid] = hora.split(':').map(Number)
+  const minutosGrid = hGrid * 60 + mGrid
+
   for (const asig of asignaciones.value) {
-    const slot = asig.horarios?.find(h => h.diaSemana === dia && h.horaInicio === hora)
+    if (!asig.horarios) continue
+    
+    // Buscar si alguna sesión cubre este minuto del grid
+    const slot = asig.horarios.find(h => {
+      if (h.diaSemana !== dia) return false
+      
+      const [hStart, mStart] = h.horaInicio.split(':').map(Number)
+      const [hEnd, mEnd] = h.horaFin.split(':').map(Number)
+      const minStart = hStart * 60 + mStart
+      const minEnd = hEnd * 60 + mEnd
+      
+      // La celda del grid (ej: 07:45) pertenece a la sesión si está dentro del rango [inicio, fin)
+      return minutosGrid >= minStart && minutosGrid < minEnd
+    })
+
     if (slot) {
       return {
-        curso: asig.curso?.codigo || 'CUR',
-        profesor: `${asig.profesor?.apellidos || ''}`,
+        curso: asig.curso?.nombre?.substring(0, 25) || 'CUR',
+        profesor: `${asig.profesor?.apellidos || 'Docente'}`,
         aula: slot.aula?.codigo || asig.aula?.codigo || 'S/A',
         tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : 'teor'),
+        isStart: slot.horaInicio === hora, // Para saber si mostramos el texto o solo el color si es continuación
         original: slot
       }
     }
