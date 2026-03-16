@@ -82,15 +82,17 @@
             <div
               v-for="horario in obtenerHorario(dia, hora)"
               :key="horario._id"
-              :class="['horario-item', getTipoClase(horario)]"
+              :class="['horario-item', getTipoClase(horario), { 'is-continuation': !isInicioSesion(horario, hora) }]"
               @click="seleccionarHorario(horario)"
             >
-              <div class="horario-curso">{{ horario.curso?.nombre }}</div>
-              <div class="horario-profesor">
-                👨‍🏫 {{ horario.profesor?.nombres }} {{ horario.profesor?.apellidos?.charAt(0) }}.
-              </div>
-              <div class="horario-aula">🚪 {{ horario.aula?.codigo }}</div>
-              <div class="horario-tiempo">{{ horario.horaInicio }} - {{ horario.horaFin }}</div>
+              <template v-if="isInicioSesion(horario, hora)">
+                <div class="horario-curso">{{ horario.curso?.nombre }}</div>
+                <div class="horario-profesor">
+                  👨‍🏫 {{ horario.profesor?.nombres }} {{ horario.profesor?.apellidos?.charAt(0) }}.
+                </div>
+                <div class="horario-aula">📍 {{ horario.aula?.codigo }}</div>
+                <div class="horario-tiempo">{{ horario.horaInicio }} - {{ horario.horaFin }}</div>
+              </template>
             </div>
           </div>
         </div>
@@ -181,9 +183,9 @@ const filtros = ref({
 // Configuración del calendario
 const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const horasDisponibles = [
-  '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
-  '19:00', '20:00', '21:00', '22:00'
+  '07:45', '08:30', '09:15', '10:00', '10:45', '11:45', 
+  '12:30', '13:15', '14:00', '14:45', '15:30', '16:30', 
+  '17:15', '18:00', '18:45', '19:30', '20:15', '21:00'
 ]
 
 // Computed
@@ -262,12 +264,31 @@ const cargarHorarios = async () => {
 }
 
 const obtenerHorario = (dia, hora) => {
+  const [hGrid, mGrid] = hora.split(':').map(Number)
+  const minutosGrid = hGrid * 60 + mGrid
+
   return horarios.value.filter(h => {
     if (h.diaSemana !== dia) return false
     
-    const horaInicio = h.horaInicio?.substring(0, 5)
-    return horaInicio === hora
+    const [hStart, mStart] = h.horaInicio.split(':').map(Number)
+    const [hEnd, mEnd] = h.horaFin.split(':').map(Number)
+    const minStart = hStart * 60 + mStart
+    const minEnd = hEnd * 60 + mEnd
+    
+    // Filtro por turno local si aplica
+    if (filtros.value.turno) {
+      const turnoBloque = h.bloque?.subPeriodo?.toLowerCase() || ''
+      if (!turnoBloque.includes(filtros.value.turno.toLowerCase())) return false
+    }
+
+    // Una sesión pertenece a esta "celda" si el minuto del grid está dentro de su rango [inicio, fin)
+    // O si es exactamente la hora de inicio (para capturar sesiones fuera del grid estándar)
+    return (minutosGrid >= minStart && minutosGrid < minEnd) || (h.horaInicio === hora)
   })
+}
+
+const isInicioSesion = (horario, hora) => {
+  return horario.horaInicio === hora
 }
 
 const getTipoClase = (horario) => {
@@ -322,29 +343,48 @@ onMounted(() => {
 }
 
 .filters-card {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
 }
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
 .filter-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--dark);
+  margin-bottom: 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .filter-group select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.9rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.filter-group select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.1);
+  outline: none;
 }
 
 .calendario-card {
@@ -366,11 +406,24 @@ onMounted(() => {
 }
 
 .stat-badge {
-  background: var(--light-gray);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.6rem 1.2rem;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: all 0.3s;
+}
+
+.stat-badge:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
 }
 
 .calendario-grid {
@@ -420,49 +473,83 @@ onMounted(() => {
 }
 
 .horario-item {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  position: relative;
+  background: white;
+  color: var(--text-main);
+  padding: 0.6rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 4px;
+  border-left: 5px solid var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: hidden;
+  z-index: 2;
 }
 
 .horario-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 10;
+}
+
+.horario-item.is-continuation {
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: -6px;
+  border-radius: 0 0 10px 10px;
+  border-left-width: 5px;
+  min-height: 40px;
+  box-shadow: none;
+  opacity: 0.9;
 }
 
 .horario-item.tipo-teoria {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-left-color: #3b82f6;
+  background: linear-gradient(to right, #eff6ff, #ffffff);
 }
 
 .horario-item.tipo-taller {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-left-color: #10b981;
+  background: linear-gradient(to right, #ecfdf5, #ffffff);
 }
 
 .horario-item.tipo-laboratorio {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.horario-item.tipo-virtual {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  border-left-color: #f59e0b;
+  background: linear-gradient(to right, #fffbeb, #ffffff);
 }
 
 .horario-curso {
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1e293b;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.horario-profesor,
-.horario-aula,
+.horario-profesor {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.horario-aula {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.75rem;
+}
+
 .horario-tiempo {
   font-size: 0.7rem;
-  opacity: 0.95;
-  margin-bottom: 0.15rem;
+  color: #64748b;
+  margin-top: auto;
+  font-style: italic;
 }
 
 .loading {
