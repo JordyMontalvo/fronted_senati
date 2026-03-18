@@ -9,7 +9,7 @@
         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
           <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span>Nuevo Ciclo</span>
+        <span>Nuevo Periodo</span>
       </button>
     </div>
 
@@ -63,7 +63,7 @@
         <h3>No hay calendarios configurados</h3>
         <p>Los períodos son la base de toda la programación. Crea el primer ciclo académico para comenzar.</p>
         <button class="btn btn-primary" @click="abrirModalNuevo">
-          Configurar Primer Ciclo
+          Configurar primer periodo
         </button>
       </div>
     </div>

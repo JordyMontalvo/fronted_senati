@@ -4,12 +4,12 @@
     <header class="hero-bento">
       <div class="bento-main glass-card">
         <div class="hero-badge">Plataforma Oficial 2025</div>
-        <h1 class="hero-title">Sistema de Programación <span class="text-gradient">Académica</span></h1>
+        <h1 class="hero-title">Sistema de Horarios <span class="text-gradient">Académica</span></h1>
         <p class="hero-desc">La arquitectura inteligente para la gestión de horarios y recursos de SENATI. Diseñado para la precisión y el alto rendimiento académico.</p>
         
         <div class="hero-actions">
           <router-link to="/horarios/gestionar" class="btn btn-primary-premium">
-            <span>Comenzar Programación</span>
+            <span>Nuevo Horario</span>
             <div class="btn-glow"></div>
           </router-link>
           <router-link to="/reportes" class="btn btn-secondary-premium">
