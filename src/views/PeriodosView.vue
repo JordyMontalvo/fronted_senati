@@ -2,7 +2,7 @@
   <div class="periodos-view fadeIn">
     <div class="page-header">
       <div class="header-content">
-        <h1 class="text-gradient">📅 Ciclos Académicos</h1>
+        <h1 class="text-gradient">📅 Periodos Académicos</h1>
         <p>Configuración de períodos lectivos y ventanas de programación</p>
       </div>
       <button class="btn btn-premium" @click="abrirModalNuevo">
@@ -122,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { periodosService } from '../services'
 import Modal from '../components/Modal.vue'
 import Pagination from '../components/Pagination.vue'
@@ -137,6 +137,16 @@ const porPagina = ref(12)
 
 const formulario = ref({
   codigo: '', nombre: '', fechaInicio: '', fechaFin: '', estado: 'planificado'
+})
+
+// Automatización de 16 semanas para nuevos periodos
+watch(() => formulario.value.fechaInicio, (newVal) => {
+  if (newVal && !formulario.value.fechaFin) {
+    const d = new Date(newVal)
+    const endDate = new Date(d.getTime())
+    endDate.setDate(endDate.getDate() + (16 * 7) - 1)
+    formulario.value.fechaFin = endDate.toISOString().split('T')[0]
+  }
 })
 
 const periodosPaginados = computed(() => {

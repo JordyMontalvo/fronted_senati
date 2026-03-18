@@ -437,7 +437,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, inject } from 'vue'
+import { ref, onMounted, computed, inject, watch } from 'vue'
 import Modal from '../components/Modal.vue'
 import { bloquesService, periodosService, cursosService, profesoresService, aulasService } from '../services'
 import api from '../services/api'
@@ -480,6 +480,16 @@ const formularioHorario = ref({
   fechaFin: null
 })
 const esModular = ref(false)
+
+// Observar fecha de inicio para poner automáticamente 16 semanas adelante (estándar SENATI)
+watch(() => formularioHorario.value.fechaInicio, (newVal) => {
+  if (newVal && !formularioHorario.value.fechaFin) {
+    const startDate = new Date(newVal)
+    const endDate = new Date(startDate.getTime())
+    endDate.setDate(endDate.getDate() + (16 * 7) - 1) // 16 semanas menos un día
+    formularioHorario.value.fechaFin = endDate.toISOString().split('T')[0]
+  }
+})
 
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const horasGrid = ['07:45', '08:30', '09:15', '10:00', '10:45', '11:45', '12:30', '13:15', '14:00', '14:45', '15:30', '16:30', '17:15', '18:00', '18:45', '19:30', '20:15', '21:00']
