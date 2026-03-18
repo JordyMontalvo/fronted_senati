@@ -118,6 +118,13 @@
               <div class="c-fill" :style="{ width: `${(getHorasAsignadas(curso._id) / curso.horasTotal) * 100}%` }"></div>
             </div>
 
+            <div class="c-hours-breakdown">
+              <span v-if="curso.horasTeoria > 0" class="h-tag sess-teor" title="Teoría">T: {{ curso.horasTeoria }}</span>
+              <span v-if="curso.horasTaller > 0" class="h-tag sess-tall" title="Taller/Práctica">P: {{ curso.horasTaller }}</span>
+              <span v-if="curso.horasVirtual > 0" class="h-tag sess-virt" title="Virtual">V: {{ curso.horasVirtual }}</span>
+              <span class="h-tag sess-total">Total: {{ curso.horasTotal }}h</span>
+            </div>
+
             <div v-if="getAsignacionParaCurso(curso._id)" class="c-instructor-tag">
               👨‍🏫 {{ getAsignacionParaCurso(curso._id).profesor?.apellidos }}
             </div>
@@ -244,25 +251,29 @@
                     <span>Ocupado</span>
                   </div>
                   
-                  <!-- Existing Slot -->
+                  <!-- Existing Slots -->
                   <div 
-                    v-if="obtenerSesion(dia, hora)" 
+                    v-for="session in obtenerSesiones(dia, hora)"
+                    :key="session.id"
                     class="slot-premium"
-                    :class="[obtenerSesion(dia, hora).tipo, { 'is-continuation': !obtenerSesion(dia, hora).isStart }]"
+                    :class="[session.tipo, { 'is-continuation': !session.isStart, 'is-modular': session.original.fechaInicio }]"
                     draggable="true"
-                    @dragstart="manejarDragStart(obtenerSesion(dia, hora).original)"
-                    @click.stop="editarHorario(obtenerSesion(dia, hora).original)">
-                    <template v-if="obtenerSesion(dia, hora).isStart">
+                    @dragstart="manejarDragStart(session.original)"
+                    @click.stop="editarHorario(session.original)">
+                    <template v-if="session.isStart">
                       <div class="s-top">
-                        <span class="s-time">{{ formatTime(obtenerSesion(dia, hora).original.horaInicio) }} - {{ formatTime(obtenerSesion(dia, hora).original.horaFin) }}</span>
-                        <button class="s-del" @click.stop="eliminarHorario(obtenerSesion(dia, hora).original._id)">×</button>
+                        <span class="s-time">{{ formatTime(session.original.horaInicio) }} - {{ formatTime(session.original.horaFin) }}</span>
+                        <div v-if="session.original.fechaInicio" class="s-date-badge">
+                           {{ formatDateShort(session.original.fechaInicio) }}
+                        </div>
+                        <button class="s-del" @click.stop="eliminarHorario(session.original._id)">×</button>
                       </div>
                       <div class="s-mid">
-                        <div class="s-course">{{ obtenerSesion(dia, hora).curso }}</div>
+                        <div class="s-course">{{ session.curso }}</div>
                       </div>
                       <div class="s-bot">
-                        <div class="s-prof">{{ obtenerSesion(dia, hora).profesor }}</div>
-                        <div class="s-room">🏛️ {{ obtenerSesion(dia, hora).aula }}</div>
+                        <div class="s-prof">{{ session.profesor }}</div>
+                        <div class="s-room">🏛️ {{ session.aula }}</div>
                       </div>
                     </template>
                   </div>
@@ -362,10 +373,29 @@
             <option value="Teoría">Teoría (Aula Común)</option>
             <option value="Taller">Taller (Equipamiento)</option>
             <option value="Laboratorio">Laboratorio (Dual/Cómputo)</option>
+            <option value="Virtual">Virtual (Entorno Remoto)</option>
           </select>
         </div>
 
         
+        <div class="form-group modular-check">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="esModular">
+            <span>¿Es Programación Modular? (Fechas específicas)</span>
+          </label>
+        </div>
+
+        <div class="form-row" v-if="esModular">
+          <div class="form-group">
+            <label>Fecha Inicio Sesión</label>
+            <input v-model="formularioHorario.fechaInicio" type="date" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Fecha Término Sesión</label>
+            <input v-model="formularioHorario.fechaFin" type="date" class="form-input">
+          </div>
+        </div>
+
         <div class="form-group">
           <label>Cambiar Aula para esta sesión</label>
           <select v-model="formularioHorario.aulaOverride" class="form-input">
@@ -438,7 +468,18 @@ const cargandoSugerencias = ref(false)
 const mostrarPanelConflictos = ref(false)
 
 const formularioAsignacion = ref({ curso: '', profesor: '', aula: '', bloque: '' })
-const formularioHorario = ref({ asignacion: '', diaSemana: '', horaInicio: '', horaFin: '', tipoSesion: 'Teoría', aulaOverride: null })
+const formularioHorario = ref({ 
+  _id: null,
+  asignacion: '', 
+  diaSemana: '', 
+  horaInicio: '', 
+  horaFin: '', 
+  tipoSesion: 'Teoría', 
+  aulaOverride: null,
+  fechaInicio: null,
+  fechaFin: null
+})
+const esModular = ref(false)
 
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const horasGrid = ['07:45', '08:30', '09:15', '10:00', '10:45', '11:45', '12:30', '13:15', '14:00', '14:45', '15:30', '16:30', '17:15', '18:00', '18:45', '19:30', '20:15', '21:00']
@@ -502,6 +543,12 @@ function formatTime(hora) {
   return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
+function formatDateShort(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`
+}
+
 function getAsignacionParaCurso(cursoId) {
   return asignaciones.value.find(a => a.curso?._id === cursoId || a.curso === cursoId)
 }
@@ -533,15 +580,16 @@ function getPreviaHora(hora) {
   return idx > 0 ? horasGrid[idx - 1] : null
 }
 
-function obtenerSesion(dia, hora) {
+function obtenerSesiones(dia, hora) {
   const [hGrid, mGrid] = hora.split(':').map(Number)
   const minutosGrid = hGrid * 60 + mGrid
+  const matches = []
 
   for (const asig of asignaciones.value) {
     if (!asig.horarios) continue
     
-    // Buscar si alguna sesión cubre este minuto del grid
-    const slot = asig.horarios.find(h => {
+    // Buscar todas las sesiones que cubren este minuto del grid
+    const slots = asig.horarios.filter(h => {
       if (h.diaSemana !== dia) return false
       
       const [hStart, mStart] = h.horaInicio.split(':').map(Number)
@@ -552,8 +600,8 @@ function obtenerSesion(dia, hora) {
       return minutosGrid >= minStart && minutosGrid < minEnd
     })
 
-    if (slot) {
-      // Determinamos si es el inicio visual: si NO hay sesión en la hora anterior del grid
+    slots.forEach(slot => {
+      // Determinamos si es el inicio visual
       const prevHora = getPreviaHora(hora)
       let esContinuacion = false
       if (prevHora) {
@@ -570,18 +618,18 @@ function obtenerSesion(dia, hora) {
       const building = slot.aula?.edificio || asig.aula?.edificio || ''
       const buildingPrefix = building ? `${building} - ` : ''
 
-      return {
+      matches.push({
         id: slot._id,
         curso: asig.curso?.nombre?.substring(0, 35) || 'CURSO',
         profesor: asig.profesor ? `${asig.profesor.apellidos}, ${asig.profesor.nombres}` : 'Docente no asignado',
         aula: `${buildingPrefix}${slot.aula?.codigo || asig.aula?.codigo || 'S/A'}`,
-        tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : 'teor'),
+        tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : (slot.tipoSesion?.toLowerCase() === 'virtual' ? 'virt' : 'teor')),
         isStart: !esContinuacion, 
         original: slot
-      }
-    }
+      })
+    })
   }
-  return null
+  return matches.length > 0 ? matches : null
 }
 
 function manejarClickCelda(dia, hora) {
@@ -599,9 +647,13 @@ function manejarClickCelda(dia, hora) {
     asignacion: asig._id,
     diaSemana: dia,
     horaInicio: hora,
+    horaInicio: hora,
     horaFin: calcularSiguienteHora(hora),
-    tipoSesion: 'Teoría'
+    tipoSesion: 'Teoría',
+    fechaInicio: null,
+    fechaFin: null
   }
+  esModular.value = false
   mostrarModalHorario.value = true
 }
 
@@ -704,13 +756,16 @@ async function autoLlenarCurso(curso) {
       if (slots.length === 0) break
       
       const slot = slots[0]
-      await api.post('/horarios', {
+      const payload = {
         asignacion: asig._id,
         diaSemana: slot.dia,
         horaInicio: slot.hora,
         horaFin: calcularSiguienteHora(slot.hora),
         tipoSesion: 'Teoría'
-      })
+      }
+      // Assuming autoLlenarCurso always creates new entries, not updates
+      await api.post('/horarios', payload)
+      toast?.success('Guardado', 'Sesión programada correctamente')
       
       await cargarAsignaciones()
       horasRestantes = curso.horasTotal - getHorasAsignadas(curso._id)
@@ -863,14 +918,20 @@ function calcularSiguienteHora(hora) {
 
 function editarHorario(horario) {
   horarioEditando.value = horario
+  const fI = horario.fechaInicio ? new Date(horario.fechaInicio).toISOString().split('T')[0] : null
+  const fF = horario.fechaFin ? new Date(horario.fechaFin).toISOString().split('T')[0] : null
+  
   formularioHorario.value = {
     asignacion: horario.asignacion?._id || horario.asignacion,
     diaSemana: horario.diaSemana,
     horaInicio: horario.horaInicio,
     horaFin: horario.horaFin,
     tipoSesion: horario.tipoSesion,
-    aulaOverride: horario.aula?._id || horario.aula
+    aulaOverride: horario.aula?._id || horario.aula,
+    fechaInicio: fI,
+    fechaFin: fF
   }
+  esModular.value = !!(fI || fF)
   mostrarModalHorario.value = true
 }
 
@@ -962,11 +1023,27 @@ async function guardarAsignacion() {
 async function guardarHorario() {
   try {
     guardando.value = true
-    if (horarioEditando.value) await api.put(`/horarios/${horarioEditando.value._id}`, formularioHorario.value)
-    else await api.post('/horarios', formularioHorario.value)
-    await cargarAsignaciones(); mostrarModalHorario.value = false
-  } catch (e) { toast?.error('Cruce de Horario Detectado', e.response?.data?.message) }
-  finally { guardando.value = false }
+    const payload = { ...formularioHorario.value }
+    if (!esModular.value) {
+      payload.fechaInicio = null
+      payload.fechaFin = null
+    }
+
+    if (horarioEditando.value) {
+      await api.put(`/horarios/${horarioEditando.value._id}`, payload)
+      toast?.success('Actualizado', 'Sesión modificada correctamente')
+    } else {
+      await api.post('/horarios', payload)
+      toast?.success('Guardado', 'Sesión programada correctamente')
+    }
+    
+    await cargarAsignaciones()
+    mostrarModalHorario.value = false
+  } catch (e) {
+    toast?.error('Error', e.response?.data?.message || 'Error al guardar horario')
+  } finally {
+    guardando.value = false
+  }
 }
 
 async function eliminarHorario(id) {
@@ -1307,6 +1384,21 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .slot-premium.teor { background: linear-gradient(135deg, var(--primary), var(--secondary)); box-shadow: 0 4px 12px rgba(0, 66, 139, 0.3); }
 .slot-premium.tall { background: linear-gradient(135deg, #F26522, #FF8E53); box-shadow: 0 4px 12px rgba(242, 101, 34, 0.3); }
 .slot-premium.labo { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+.slot-premium.virt { background: linear-gradient(135deg, #6366f1, #a855f7); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+
+.slot-premium.is-modular { 
+  border: 1.5px solid rgba(255, 255, 255, 0.4); 
+}
+
+.s-date-badge {
+  font-size: 0.6rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.1rem 0.4rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  color: white;
+  margin-left: 0.5rem;
+}
 
 .s-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
 .s-time { font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.85); font-style: italic; }
@@ -1359,6 +1451,13 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 .busy-list small { display: block; margin-bottom: 0.4rem; font-weight: 700; color: var(--text-muted); }
 .busy-list ul { list-style: none; padding: 0; margin: 0; }
 .busy-list li { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+
+.c-hours-breakdown { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+.h-tag { font-size: 0.6rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+.h-tag.sess-teor { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
+.h-tag.sess-tall { background: rgba(242, 101, 34, 0.1); color: #fb923c; border-color: rgba(242, 101, 34, 0.2); }
+.h-tag.sess-virt { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2); }
+.h-tag.sess-total { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
 
 .c-instructor-tag { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); padding: 0.3rem 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; text-transform: uppercase; }
 

@@ -63,8 +63,11 @@
       </div>
 
       <div class="actions-footer">
-        <p>¿Los datos se ven correctos?</p>
-        <button class="btn btn-success" @click="startGeneration">Confirmar e Iniciar Generación IA 🤖</button>
+        <p>¿Qué deseas hacer con estos datos?</p>
+        <div class="actions-buttons">
+          <button class="btn btn-secondary" :disabled="uploading" @click="onlyImport">Solo Importar Bloques</button>
+          <button class="btn btn-success" :disabled="uploading" @click="startGeneration">Confirmar e Iniciar Generación IA 🤖</button>
+        </div>
       </div>
     </div>
   </div>
@@ -142,6 +145,28 @@ const uploadFile = async () => {
     console.error(err)
     error.value = 'Ocurrió un error al subir el archivo. Revisa la consola.'
     toast.error('Error', 'Fallo en la conexión')
+  } finally {
+    uploading.value = false
+  }
+}
+const onlyImport = async () => {
+  if (!previewData.value || !previewData.value.filepath) return
+
+  uploading.value = true
+  try {
+    toast.info('Importando...', 'Creando bloques en la base de datos')
+    const response = await api.post('/upload/bloques/importar', {
+      filepath: previewData.value.filepath
+    })
+
+    if (response.data.success) {
+      toast.success('¡Importación Exitosa!', response.data.message)
+      removeFile()
+    } else {
+      toast.error('Error', response.data.message)
+    }
+  } catch (err) {
+    toast.error('Error', err.response?.data?.message || 'Error al importar')
   } finally {
     uploading.value = false
   }
@@ -278,6 +303,12 @@ const startGeneration = async () => {
   text-align: center;
   border-top: 1px solid var(--border);
   padding-top: 1.5rem;
+}
+
+.actions-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .actions-footer p {
