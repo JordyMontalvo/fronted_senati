@@ -33,6 +33,10 @@
             <div class="stat-value">{{ profesores.length }}</div>
             <div class="stat-label">Docentes</div>
           </router-link>
+          <router-link to="/ubicaciones" class="stat-item clickable">
+            <div class="stat-value">{{ sedesCount }}</div>
+            <div class="stat-label">Sedes / CFP</div>
+          </router-link>
         </div>
         <div class="pulse-container">
           <span class="pulse-dot"></span>
@@ -89,11 +93,27 @@
         </div>
       </router-link>
 
-      <router-link to="/reportes" class="feature-card glass-card span-1">
+      <router-link to="/reportes" class="feature-card glass-card">
         <div class="feature-icon">📊</div>
         <div class="feature-info">
           <h3>Reportes</h3>
           <p>Exportación a PDF de cargas académicas.</p>
+        </div>
+      </router-link>
+
+      <router-link to="/periodos" class="feature-card glass-card">
+        <div class="feature-icon">⏳</div>
+        <div class="feature-info">
+          <h3>Periodos</h3>
+          <p>Configuración de ciclos y 16 semanas estándar.</p>
+        </div>
+      </router-link>
+
+      <router-link to="/ubicaciones" class="feature-card glass-card">
+        <div class="feature-icon">🗺️</div>
+        <div class="feature-info">
+          <h3>Estructura</h3>
+          <p>Zonales y sedes operativas a nivel nacional.</p>
         </div>
       </router-link>
     </section>
@@ -113,8 +133,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
+import api from '../services/api'
 
 const store = useAppStore()
 
@@ -122,8 +143,13 @@ const carreras = computed(() => store.carreras || [])
 const cursos = computed(() => store.cursos || [])
 const profesores = computed(() => store.profesores || [])
 
+const sedesCount = ref(0)
+
 onMounted(async () => {
   try {
+    const res = await api.get('/ubicaciones/sedes')
+    sedesCount.value = res.data.length || 0
+    
     await Promise.all([
       store.fetchCarreras(),
       store.fetchCursos(),
