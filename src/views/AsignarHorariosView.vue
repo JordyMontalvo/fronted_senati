@@ -262,17 +262,17 @@
                     @click.stop="editarHorario(session.original)">
                     <template v-if="session.isStart">
                       <div class="s-top">
-                        <span class="s-time">{{ formatTime(session.original.horaInicio) }} - {{ formatTime(session.original.horaFin) }}</span>
+                        <span class="s-nrc">[{{ session.nrc }}]</span>
                         <div v-if="session.original.fechaInicio" class="s-date-badge">
                            {{ formatDateShort(session.original.fechaInicio) }}
                         </div>
                         <button class="s-del" @click.stop="eliminarHorario(session.original._id)">×</button>
                       </div>
                       <div class="s-mid">
-                        <div class="s-course">{{ session.curso }}</div>
+                        <div class="s-course" :title="session.curso">{{ session.curso }}</div>
                       </div>
                       <div class="s-bot">
-                        <div class="s-prof">{{ session.profesor }}</div>
+                        <div class="s-prof" :title="session.profesor">{{ session.profesor }}</div>
                         <div class="s-room">🏛️ {{ session.aula }}</div>
                       </div>
                     </template>
@@ -481,12 +481,19 @@ const formularioHorario = ref({
 })
 const esModular = ref(false)
 
-// Observar fecha de inicio para poner automáticamente 16 semanas adelante (estándar SENATI)
+// Observar fecha de inicio para calcular periodo automáticamente
 watch(() => formularioHorario.value.fechaInicio, (newVal) => {
-  if (newVal && !formularioHorario.value.fechaFin) {
+  if (newVal) {
     const startDate = new Date(newVal)
     const endDate = new Date(startDate.getTime())
-    endDate.setDate(endDate.getDate() + (16 * 7) - 1) // 16 semanas menos un día
+    
+    // Buscar el curso asignado para ver si es seminario o modular
+    const asig = asignaciones.value.find(a => a._id === formularioHorario.value.asignacion)
+    const nombreCurso = asig?.curso?.nombre || cursoSeleccionadoParaAsignar.value?.nombre || ''
+    const esSeminario = nombreCurso.toUpperCase().includes('SEMINARIO')
+    
+    const semanas = esSeminario ? 16 : 4 // Seminarios 16 de marzo a julio, modulares 4 semanas
+    endDate.setDate(endDate.getDate() + (semanas * 7) - 1)
     formularioHorario.value.fechaFin = endDate.toISOString().split('T')[0]
   }
 })
@@ -630,8 +637,9 @@ function obtenerSesiones(dia, hora) {
 
       matches.push({
         id: slot._id,
-        curso: asig.curso?.nombre?.substring(0, 35) || 'CURSO',
-        profesor: asig.profesor ? `${asig.profesor.apellidos}, ${asig.profesor.nombres}` : 'Docente no asignado',
+        nrc: asig.bloque?.codigo || 'N/A',
+        curso: asig.curso?.nombre || 'CURSO',
+        profesor: asig.profesor ? `${asig.profesor.apellidos}, ${asig.profesor.nombres.charAt(0)}.` : 'Docente no asignado',
         aula: `${buildingPrefix}${slot.aula?.codigo || asig.aula?.codigo || 'S/A'}`,
         tipo: slot.tipoSesion?.toLowerCase() === 'laboratorio' ? 'labo' : (slot.tipoSesion?.toLowerCase() === 'taller' ? 'tall' : (slot.tipoSesion?.toLowerCase() === 'virtual' ? 'virt' : 'teor')),
         isStart: !esContinuacion, 
@@ -653,17 +661,18 @@ function manejarClickCelda(dia, hora) {
   if (!asig) return toast?.info('Primero vincula un docente al curso')
   
   horarioEditando.value = null
+  const esSeminario = cur.nombre?.toUpperCase().includes('SEMINARIO')
+  
   formularioHorario.value = {
     asignacion: asig._id,
     diaSemana: dia,
     horaInicio: hora,
-    horaInicio: hora,
     horaFin: calcularSiguienteHora(hora),
-    tipoSesion: 'Teoría',
+    tipoSesion: esSeminario ? 'Virtual' : 'Teoría',
     fechaInicio: null,
     fechaFin: null
   }
-  esModular.value = false
+  esModular.value = !esSeminario
   mostrarModalHorario.value = true
 }
 
@@ -919,10 +928,8 @@ function sumarMinutos(hora, minutos) {
 }
 
 function calcularSiguienteHora(hora) {
-  const idx = horasGrid.indexOf(hora)
-  if (idx !== -1 && idx < horasGrid.length - 1) return horasGrid[idx + 1]
   const [h, m] = hora.split(':').map(Number)
-  const dt = new Date(0,0,0, h, m + 45)
+  const dt = new Date(0,0,0, h, m + 135) // 3 horas pedagógicas (45min * 3)
   return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
 }
 
@@ -1411,6 +1418,7 @@ onMounted(() => { cargarPeriodos(); professorsAndAulas() })
 }
 
 .s-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
+.s-nrc { font-size: 0.65rem; font-weight: 800; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .s-time { font-size: 0.65rem; font-weight: 800; color: rgba(255,255,255,0.85); font-style: italic; }
 .s-course { font-size: 0.85rem; font-weight: 900; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.3rem; }
 .s-del { background: none; border: none; color: white; font-size: 1rem; cursor: pointer; opacity: 0.7; }
